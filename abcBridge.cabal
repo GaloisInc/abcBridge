@@ -29,6 +29,10 @@ flag enable-hpc
   Description: Collect HPC coverage information.
   Default: False
 
+source-repository head
+  type: git
+  location: https://github.com/GaloisInc/abcBridge.git
+
 library
   Hs-source-dirs:       src
   Exposed-modules:
