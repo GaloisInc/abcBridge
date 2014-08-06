@@ -93,6 +93,7 @@ proxy = AIG.Proxy id
 withGIAPtr :: GIA s -> (Gia_Man_t -> IO a) -> IO a
 withGIAPtr (GIA g) m = withForeignPtr g m
 
+-- | Build a new empty GIA graph
 newGIA :: IO (AIG.SomeGraph GIA)
 newGIA = do
   abcStart
@@ -100,6 +101,7 @@ newGIA = do
   giaManHashAlloc p
   AIG.SomeGraph . GIA <$> newForeignPtr p_giaManStop p
 
+-- | Read an AIGER file into a GIA graph
 readAiger :: FilePath -> IO (AIG.Network Lit GIA)
 readAiger path = do
   abcStart
@@ -323,6 +325,8 @@ getVecIntAsBool v = do
       1 -> return True
       _ -> fail $ "getVecAsBool given bad value " ++ show e
 
+-- | Write a CNF file to the given path.
+--   Returns vector mapping combinational inputs to CNF Variable numbers.
 writeCNF :: GIA s -> Lit s -> FilePath -> IO [Int]
 writeCNF ntk l f = do
   giaNetworkAsAIGMan (AIG.Network ntk [l]) $ \pMan -> do

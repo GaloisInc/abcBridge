@@ -13,10 +13,6 @@ Portability : non-portable (c2hs, language extensions)
 Comprehensive binding of @aig\/cec\/cec.h@ for performing combinational
 equivalence checking of scalable and-inverter graphs (GIA).
 
-/Todo./ All data structures in this module should be 'Storable', but
-only some of them have 'Storable' instances written.  When this happens,
-the corresponding functions should be updated to use @cWith@ or @peek@.
-
 -}
 
 module Data.ABC.Internal.CEC (

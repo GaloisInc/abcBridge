@@ -27,6 +27,10 @@ import Control.Monad(when)
 --
 -- Finally, we must also include some information about where do find the libabc.a
 -- and libabc.dll files.
+--
+-- The way we have to do this is sort of nasty, but implementing the "readDesc" user
+-- hook doesn't seem to work the way I expect, so we have to modify the package description
+-- "in flight" inside each of the various hooks.
 
 main = defaultMainWithHooks simpleUserHooks
     { preConf  = \a f -> let v = fromFlag $ configVerbosity f
@@ -45,6 +49,27 @@ main = defaultMainWithHooks simpleUserHooks
     , sDistHook = \pkg_desc lbi h f -> do
                     pkg_desc' <- abcPkgDesc pkg_desc
                     sDistHook simpleUserHooks pkg_desc' lbi h f
+    , haddockHook = \pkg_desc lbi h f -> do
+                    pkg_desc' <- abcPkgDesc pkg_desc
+                    haddockHook simpleUserHooks pkg_desc' lbi h f
+    , copyHook = \pkg_desc lbi h f -> do
+                    pkg_desc' <- abcPkgDesc pkg_desc
+                    copyHook simpleUserHooks pkg_desc' lbi h f
+    , instHook = \pkg_desc lbi h f -> do
+                    pkg_desc' <- abcPkgDesc pkg_desc
+                    instHook simpleUserHooks pkg_desc' lbi h f
+    , regHook = \pkg_desc lbi h f -> do
+                    pkg_desc' <- abcPkgDesc pkg_desc
+                    regHook simpleUserHooks pkg_desc' lbi h f
+    , unregHook = \pkg_desc lbi h f -> do
+                    pkg_desc' <- abcPkgDesc pkg_desc
+                    unregHook simpleUserHooks pkg_desc' lbi h f
+    , hscolourHook = \pkg_desc lbi h f -> do
+                    pkg_desc' <- abcPkgDesc pkg_desc
+                    hscolourHook simpleUserHooks pkg_desc' lbi h f
+    , testHook = \pkg_desc lbi h f -> do
+                    pkg_desc' <- abcPkgDesc pkg_desc
+                    testHook simpleUserHooks pkg_desc' lbi h f
 
     , postCopy = postCopyAbc
     , postInst = postInstAbc
