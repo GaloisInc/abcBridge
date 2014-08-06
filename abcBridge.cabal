@@ -25,9 +25,10 @@ flag enable-pthreads
   Description: Turn on multithreading
   Default: False
 
-flag enable-hpc
-  Description: Collect HPC coverage information.
-  Default: False
+-- Ugh. Temporary fix to make Hackage happy.
+--flag enable-hpc
+--  Description: Collect HPC coverage information.
+--  Default: False
 
 source-repository head
   type: git
@@ -98,8 +99,9 @@ library
                         cbits/abcBridgeGiaDup.c
                         cbits/pthread_stubs.c
 
-  if flag(enable-hpc)
-    ghc-options: -fhpc -hpcdir .hpc
+  -- Ugh. Temporary fix to make Hackage happy.
+  --if flag(enable-hpc)
+  --  ghc-options: -fhpc -hpcdir .hpc
 
 
 test-suite abc-test
@@ -109,13 +111,15 @@ test-suite abc-test
   ghc-options: -Wall
   ghc-prof-options: -fprof-auto -O2
 
-  if flag(enable-hpc)
-    ghc-options: -fhpc
+  -- Ugh. Temporary fix to make Hackage happy.
+  --if flag(enable-hpc)
+  --  ghc-options: -fhpc
 
   default-Language: Haskell98
 
-  if flag(enable-hpc)
-    ghc-options: -fhpc
+  -- Ugh. Temporary fix to make Hackage happy.
+  --if flag(enable-hpc)
+  --  ghc-options: -fhpc
 
   other-modules:
     Tests.Basic
@@ -141,8 +145,9 @@ Executable long-test
   ghc-options: -Wall
   ghc-prof-options: -fprof-auto -O2
 
-  if flag(enable-hpc)
-    ghc-options: -fhpc
+  -- Ugh. Temporary fix to make Hackage happy.
+  --if flag(enable-hpc)
+  --  ghc-options: -fhpc
 
   default-Language: Haskell98
 
