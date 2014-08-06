@@ -19,15 +19,18 @@ manipulating them.
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 module Data.ABC (
+      -- * Library setup and teardown
       initialize
     , unsafeCleanup
 
+      -- * Standard ABC interface
     , AIG
     , AIGLit
     , aigNetwork
     , AIG.newAIG
     , readAigerAsAIG
 
+      -- * New style ABC representation
     , GIA
     , GIALit
     , giaNetwork
@@ -74,10 +77,10 @@ unsafeCleanup :: IO ()
 unsafeCleanup = abcStop
 
 
--- | Read the AIGER as an AIG network.
+-- | Read an AIGER file as an AIG network.
 readAigerAsAIG :: FilePath -> IO (Network AIGLit AIG)
 readAigerAsAIG = AIG.readAiger
 
--- | Read the AIGER as a GIA network.
+-- | Read an AIGER file as a GIA network.
 readAigerAsGIA :: FilePath -> IO (Network GIALit GIA)
 readAigerAsGIA = GIA.readAiger

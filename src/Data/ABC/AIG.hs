@@ -77,9 +77,11 @@ newtype AIG s = AIG { _ntkPtr :: ForeignPtr Abc_Ntk_t_ }
 newtype Lit s = Lit { unLit :: Abc_Obj_t }
   deriving (Eq, Storable)
 
+-- | Proxy for building AIG networks
 proxy :: AIG.Proxy Lit AIG
 proxy = AIG.Proxy id
 
+-- | Build a new, empty AIG graph
 newAIG :: IO (AIG.SomeGraph AIG)
 newAIG = do
   abcStart -- Ensure's ABC has been initialized.
@@ -109,7 +111,7 @@ deletePos p = foreachPo_ p abcNtkDeleteObj
 checkReadable :: FilePath -> IO ()
 checkReadable path = withFile path ReadMode (\_ -> return())
 
-
+-- | Read an AIGER file as an AIG network
 readAiger :: FilePath -> IO (AIG.Network Lit AIG)
 readAiger path = do
   abcStart
@@ -268,7 +270,6 @@ pureEvaluateFn v (Lit l) = Unsafe.unsafePerformIO $ do
   let n = V.length v
   when (i >= n) $ fail "Literal created after evaluator was created."
   return ((v V.! i) /= c)
-
 
 evaluateFn :: VM.IOVector Bool
            -> Lit s
