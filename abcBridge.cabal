@@ -1,5 +1,5 @@
 Name:               abcBridge
-Version:            0.10.0.0
+Version:            0.10.9.9
 Synopsis:           Bindings for ABC, A System for Sequential
                     Synthesis and Verification
 Description:        Bindings for ABC focused on creating And-Inverter
