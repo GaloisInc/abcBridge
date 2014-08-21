@@ -376,7 +376,7 @@ giaManAppendCo m (GiaLit l) = GiaLit <$> giaManAppendCo_ m l
 -- | Return object associated with gia var.
 giaManObj :: Gia_Man_t -> GiaVar -> IO Gia_Obj_t
 giaManObj m (GiaVar v) = do
-  cnt <- giaManCiNum m
+  cnt <- giaManObjNum m
   assert (0 <= v && v < cnt) $ do
     (`incObjPtr` v) <$> giaManConst0 m
 

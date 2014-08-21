@@ -61,7 +61,7 @@ library
                         FlexibleContexts,
                         MultiParamTypeClasses,
                         EmptyDataDecls
-  Ghc-options:          -Wall
+  Ghc-options:          -Wall  -auto-all -caf-all -fno-ignore-asserts
   -- -U__BLOCKS__ to work around https://github.com/haskell/c2hs/issues/29
   Cc-options:           -U__BLOCKS__ -U__has_attribute -w
 
@@ -88,6 +88,7 @@ library
   Build-depends:
     base >= 4,
     aig,
+    containers,
     directory,
     vector
   Extra-libraries:      abc

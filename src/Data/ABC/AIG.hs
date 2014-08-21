@@ -56,6 +56,9 @@ import qualified Data.Vector.Storable as V
 import qualified Data.Vector.Storable.Mutable as VM
 import System.IO
 import qualified System.IO.Unsafe as Unsafe
+import qualified Data.Map as Map
+import           Data.IORef
+
 
 
 import Data.ABC.Internal.ABC
@@ -70,12 +73,13 @@ import Data.ABC.Internal.VecInt
 import Data.ABC.Internal.VecPtr
 
 import qualified Data.AIG as AIG
+import           Data.AIG.Interface (LitView(..))
 import Data.ABC.Util
 
 newtype AIG s = AIG { _ntkPtr :: ForeignPtr Abc_Ntk_t_ }
 
 newtype Lit s = Lit { unLit :: Abc_Obj_t }
-  deriving (Eq, Storable)
+  deriving (Eq, Storable, Ord)
 
 -- | Proxy for building AIG networks
 proxy :: AIG.Proxy Lit AIG
@@ -171,6 +175,54 @@ checkSat' pp = do
           1 -> return AIG.Unsat
           _ -> error $ "Unrecognized return code " ++ show r ++ " from abcNtkIvyProve"
 
+memoFoldAIG :: AIG s -> (LitView a -> IO a) -> IO (Lit s -> IO a)
+memoFoldAIG g view = do
+    r <- newIORef Map.empty
+
+    let memo o t = do
+           m <- readIORef r
+           writeIORef r $! Map.insert o t m
+           return t
+
+        go (And x y)    = view =<< (pure And <*> objTerm x <*> objTerm y)
+        go (NotAnd x y) = view =<< (pure NotAnd <*> objTerm x <*> objTerm y)
+        go (Input i)    = view (Input i)
+        go (NotInput i) = view (NotInput i)
+        go TrueLit      = view TrueLit
+        go FalseLit     = view FalseLit
+
+        objTerm o = do
+           m <- readIORef r
+           case Map.lookup o m of
+              Just t -> return t
+              _ -> memo o =<< go =<< litView o
+
+    -- NB: Pin down the AIG foreign pointer, even though we don't explicitly use it
+    return $ (\l -> withAIGPtr g $ \_p -> objTerm l)
+
+-- Return a representation of how lit was constructed.
+-- NB: hold the AIG pointer to the graph to call this function...
+litView :: Lit s -> IO (LitView (Lit s))
+litView (Lit l) = do
+  let c = abcObjIsComplement l
+  let o = abcObjRegular l
+  i <- abcObjId o
+  ty <- abcObjType o
+  case ty of
+    AbcObjPi -> if c then return (NotInput (fromIntegral (i-1))) else return (Input (fromIntegral (i-1)))
+    AbcObjConst1 -> if c then return FalseLit else return TrueLit
+    AbcObjNode -> do
+     isand <- abcObjIsAnd o
+     if isand
+       then do
+         x <- abcObjLit0 o
+         y <- abcObjLit1 o
+         if c then return (NotAnd (Lit x) (Lit y))
+              else return (And (Lit x) (Lit y))
+       else fail "invalid AIG literal: non-and node"
+    _ -> fail ("invalid AIG literal: "++show ty++" "++show i++" "++show c)
+
+
 instance AIG.IsAIG Lit AIG where
   newGraph _ = newAIG
   aigerNetwork _ = readAiger
@@ -199,7 +251,9 @@ instance AIG.IsAIG Lit AIG where
   getInput a i = do
     withAIGPtr a $ \p -> do
       v <- abcNtkPis p
-      Lit . castPtr <$> vecPtrEntry v i
+      sz <- vecPtrSize v
+      assert (0 <= i && i < sz) $
+        Lit . castPtr <$> vecPtrEntry v i
 
   writeAiger path a = do
     withNetworkPtr a $ \p -> do
@@ -211,6 +265,8 @@ instance AIG.IsAIG Lit AIG where
         poke pp =<< abcNtkDup p
         flip finally (abcNtkDelete =<< peek pp) $ do
         checkSat' pp
+
+  abstractEvaluateAIG = memoFoldAIG
 
   cec x y = do
     ix <- networkInputCount x
@@ -303,6 +359,7 @@ addPo :: Abc_Ntk_t -> Lit s -> IO ()
 addPo p (Lit ptr) = do
   po <- abcNtkCreateObj p AbcObjPo
   abcObjAddFanin po ptr
+
 
 
 checkIsConstant :: Abc_Ntk_t -> IO (Maybe Bool)

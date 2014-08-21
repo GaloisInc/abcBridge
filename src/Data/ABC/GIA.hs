@@ -35,7 +35,7 @@ module Data.ABC.GIA
     , false
     , proxy
       -- * Inspection
-    , LitView(..)
+    , AIG.LitView(..)
     , litView
       -- * File IO
     , readAiger
@@ -53,11 +53,16 @@ module Data.ABC.GIA
     ) where
 
 import Prelude hiding (and, not, or)
+import qualified Prelude
+
 
 import Control.Exception hiding (evaluate)
 import Control.Monad
 import Control.Applicative
+import qualified Data.Map as Map
+import           Data.IORef
 import qualified Data.AIG as AIG
+import           Data.AIG.Interface (LitView(..))
 import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Unboxed as V
 import qualified Data.Vector.Unboxed.Mutable as VM
@@ -153,10 +158,15 @@ instance AIG.IsAIG Lit GIA where
   mux g (L c) (L x) (L y) = withGIAPtr g $ \p -> L <$> giaManHashMux p c x y
 
   inputCount g = fromIntegral <$> withGIAPtr g giaManCiNum
-  getInput g i = withGIAPtr g $ \p ->
-    L . giaVarLit <$> giaManCiVar p (fromIntegral i)
+  getInput g i =
+    withGIAPtr g $ \p -> do
+        cnt <- giaManCiNum p
+        assert (0 <= i && i < fromIntegral cnt) $
+          L . giaVarLit <$> giaManCiVar p (fromIntegral i)
 
   aigerNetwork _ = readAiger
+
+  abstractEvaluateAIG (GIA fp) = litEvaluator fp
 
   writeAiger path g = do
     withNetworkPtr g $ \p -> do
@@ -173,6 +183,16 @@ instance AIG.IsAIG Lit GIA where
   cec gx gy = do
     withNetworkPtr gx $ \x -> do
     withNetworkPtr gy $ \y -> do
+
+    input_count_x <- giaManCiNum x
+    input_count_y <- giaManCiNum y
+
+    output_count_x <- vecIntSize =<< giaManCos x
+    output_count_y <- vecIntSize =<< giaManCos y
+
+    assert (input_count_x == input_count_y) $ do
+    assert (output_count_x == output_count_y) $ do
+
     bracket (giaManMiter x y 0 True False False False) giaManStop $ \m -> do
     r <- cecManVerify m cecManCecDefaultParams
     case r of
@@ -270,14 +290,43 @@ fanin1Lit o v = do
   c0 <- giaObjFaninC1 o
   return $ giaLitNotCond (giaVarLit v0) c0
 
--- | A representation of a lit's strcture.
-data LitView l
-   = And !l !l
-   | NotAnd !l !l
-   | Input !Int
-   | NotInput !Int
-   | TrueLit
-   | FalseLit
+
+litEvaluator :: ForeignPtr Gia_Man_t_ -> (LitView a -> IO a) -> IO (Lit s -> IO a)
+litEvaluator fp viewFn = do
+  let memo r o t = do
+        m <- readIORef r
+        writeIORef r $! Map.insert o t m
+        return t
+  r <- newIORef Map.empty
+  let objTerm o = do
+        --putStrLn $ "objTerm " ++ show o
+        m0 <- readIORef r
+        case Map.lookup o m0 of
+          Just t -> return t
+          _ -> do
+            let c = giaIsComplement o
+            let o' = if c then giaRegular o else o
+            isTerm <- giaObjIsTerm o'
+            d0 <- giaObjDiff0 o'
+            case () of
+              _ | Prelude.not isTerm && d0 /= gia_none -> do -- And gate
+                    x <- objTerm =<< giaObjChild0 o'
+                    y <- objTerm =<< giaObjChild1 o'
+                    let and_ = if c then NotAnd else And
+                    memo r o =<< viewFn (and_ x y)
+                | isTerm && d0 /= gia_none -> do -- Primary output
+                    -- This is a primary output, so we just get the lit
+                    -- for the gate that it is attached to.
+
+                    -- FIXME? is this the right thing to do WRT complement?
+                    objTerm =<< giaObjChild0 o'
+                | Prelude.not isTerm -> do -- Constant value
+                    memo r o =<< viewFn (if c then TrueLit else FalseLit)
+                | otherwise -> do -- Primary input
+                    memo r o =<< viewFn . (if c then NotInput else Input) . fromIntegral
+                              =<< giaObjDiff1 o'
+  return $ (\(L l) -> withForeignPtr fp $ \p -> objTerm =<< giaObjFromLit p l)
+
 
 -- | Return a representation of how lit was constructed.
 litView :: GIA s -> Lit s -> IO (LitView (Lit s))
