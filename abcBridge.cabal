@@ -23,7 +23,7 @@ extra-source-files:
 
 flag enable-pthreads
   Description: Turn on multithreading
-  Default: False
+  Default: True
 
 flag enable-hpc
   Description: Collect HPC coverage information.
