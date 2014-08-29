@@ -3,6 +3,7 @@
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 {- |
 Module      : Data.ABC.GIA
@@ -91,6 +92,7 @@ enumRange i n | i == n = []
 newtype GIA s = GIA { _giaPtr :: ForeignPtr Gia_Man_t_ }
 
 newtype Lit s = L { _unLit :: GiaLit }
+  deriving (Eq, Storable, Ord)
 
 proxy :: AIG.Proxy Lit GIA
 proxy = AIG.Proxy id
