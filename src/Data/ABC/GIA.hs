@@ -271,7 +271,7 @@ _withNetworkPtr_Copy :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
 _withNetworkPtr_Copy (AIG.Network ntk out) m = do
   withGIAPtr ntk $ \p -> do
      ncos <- vecIntSize =<< giaManCos p
-     assert( ncos == 0 ) $
+     assert( ncos == 0 ) $ do
      bracket (giaManDupNormalize p) giaManStop 
          (\p' -> mapM_ (\(L o) -> giaManAppendCo p' o) out >> m p')
 
@@ -294,15 +294,15 @@ withNetworkPtr_Munge (AIG.Network ntk out) m = do
     let reset = do
           n <- readAt giaManNObjs p
 
-          cos <- giaManCos p
-          ncos <- vecIntSize cos
+          cov <- giaManCos p
+          ncos <- vecIntSize cov
 
           -- it should be that the only new objects are the COs we add
           assert (orig_oc == n - ncos) $ do
 
           -- clear the objects for reuse
           forN_ (fromIntegral ncos) $ \i -> do
-             var <- vecIntEntry cos (fromIntegral i)
+             var <- vecIntEntry cov (fromIntegral i)
              -- Assert that all the objects we are clearing are above the old object count; that is,
              -- they must have been allocated when we shoved in the new COs.
              assert (var >= orig_oc) $ do
@@ -310,7 +310,7 @@ withNetworkPtr_Munge (AIG.Network ntk out) m = do
              clearGiaObj =<< giaManObj p (GiaVar var)
 
           -- empty the CO vector
-          clearVecInt cos
+          clearVecInt cov
 
           -- Reset object count, effectively deallocating the objects
           writeAt giaManNObjs p orig_oc
@@ -318,7 +318,7 @@ withNetworkPtr_Munge (AIG.Network ntk out) m = do
     -- Run computation, then reset.
     flip finally reset $ do
       -- Add combinational outputs.
-      out' <- mapM (\(L o) -> giaManAppendCo p o) out
+      mapM_ (\(L o) -> giaManAppendCo p o) out
 
       -- Run computation.
       m p

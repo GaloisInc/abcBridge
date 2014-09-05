@@ -14,11 +14,13 @@ import Test.HUnit (assertEqual)
 import Test.QuickCheck
 
 import qualified Data.ABC as ABC
+import qualified Data.AIG.Trace as Tr
+
 
 tryIO :: IO a -> IO (Either IOException a)
 tryIO = try
 
-basic_tests :: ABC.Proxy l g -> [Test.Framework.Test]
+basic_tests :: Tr.Traceable l => ABC.Proxy l g -> [Test.Framework.Test]
 basic_tests proxy@(ABC.Proxy f) = f $
   [ testCase "test_true" $ do
       ABC.SomeGraph g <- ABC.newGraph proxy
@@ -122,12 +124,14 @@ basic_tests proxy@(ABC.Proxy f) = f $
      case rt of
        ABC.Sat{} -> return ()
        ABC.Unsat{} -> fail "trueLit is unsat"
+       ABC.SatUnknown{} -> fail "trueLit is unknown"
      rf <- ABC.checkSat g (ABC.falseLit g)
      case rf of
        ABC.Sat{} -> fail "falseLit is sat"
        ABC.Unsat{} -> return ()
+       ABC.SatUnknown{} -> fail "falseLit is unknown"
 
-  , testCase "aiger_twice" $
+  , testCase "aiger_twice" $ do
       ABC.SomeGraph g <- ABC.newGraph proxy
 
       tmpdir <- getTemporaryDirectory
