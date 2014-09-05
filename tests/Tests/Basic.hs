@@ -146,6 +146,38 @@ basic_tests proxy@(ABC.Proxy f) = f $
       r <- ABC.and g x y
 
       ABC.writeAiger (path++"2") (ABC.Network g [r])
+
+  , testCase "aiger_eval" $ do
+      Tr.withNewGraphTracing proxy "trace.log" $ \g -> do
+      --ABC.SomeGraph g <- ABC.newGraph proxy
+
+      tmpdir <- getTemporaryDirectory
+      (path, hndl) <- openTempFile tmpdir "aiger.aig"
+      hClose hndl
+
+      x <- fmap ABC.bvFromList $ sequence $ replicate 32 (ABC.newInput g)
+      y <- ABC.zipWithM (ABC.lAnd' g) x (ABC.bvFromInteger g 32 0x12345678)
+
+      ABC.writeAiger path (ABC.Network g (ABC.bvToList y))
+
+      let tobool :: Int -> Bool
+          tobool i = if i == 0 then False else True
+
+      let inputs = map tobool $ reverse $
+                   [ 0,1,1,0,1,0,0,0,
+                     0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0 ]
+
+      let outputs = fmap tobool $ reverse $
+                    [ 0,0,0,0,1,0,0,0,
+                      0,0,0,0,0,0,0,0,
+                      0,0,0,0,0,0,0,0,
+                      0,0,0,0,0,0,0,0 ]
+
+      z <- ABC.evaluate (ABC.Network g (ABC.bvToList y)) inputs
+
+      assertEqual "aiger_eval" outputs z
   ]
 
 cecNetwork :: ABC.IsAIG l g => ABC.Proxy l g -> IO (ABC.Network l g)

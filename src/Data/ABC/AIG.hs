@@ -109,7 +109,10 @@ foreachPo_ ntk f = do
 
 -- | Delete all primary outputs.
 deletePos :: Abc_Ntk_t -> IO ()
-deletePos p = foreachPo_ p abcNtkDeleteObj
+deletePos p = do
+   foreachPo_ p abcNtkDeleteObjPo
+   clearVecPtr =<< abcNtkPos p
+   clearVecPtr =<< abcNtkCos p
 
 -- | Check that a file can be read.
 -- N.B. We should eventually modify abc to be safe.
@@ -130,8 +133,12 @@ readAiger path = do
     -- Delete all primary outputs.
     outputs <- foreachPo p $ \o -> do
       i <- vecIntEntry (abcObjFanins o) 0
-      abcNtkDeleteObj o
+      abcNtkDeleteObjPo o
       Lit <$> abcNtkObj p (fromIntegral i)
+
+    -- clear the PO and CO vector
+    clearVecPtr =<< abcNtkCos p
+    clearVecPtr =<< abcNtkPos p
 
     -- Return new pointer.
     fp <- newForeignPtr p_abcNtkDelete p
@@ -293,6 +300,7 @@ instance AIG.IsAIG Lit AIG where
       var_count <- vecPtrSize objs
 
       v <- VM.new var_count
+
       -- Initialize constant literal value.
       VM.write v 0 True
 
@@ -302,13 +310,17 @@ instance AIG.IsAIG Lit AIG where
       let inputs = V.fromList inputs_l
       when (V.length inputs /= pi_count) $
         fail "evaluate given unexpected number of inputs."
+
       forI_ pi_count $ \pi_idx -> do
         o <- vecPtrEntry pis pi_idx
         idx <- fromIntegral <$> abcObjId o
         VM.write v idx (inputs V.! pi_idx)
+
       -- Initialize and nodes.
       forI_ var_count $ \i -> do
         o <- vecPtrEntry objs i
+        -- skip deleted vars!
+        unless (o == nullPtr) $ do
         is_and <- abcObjIsAnd o
         when is_and $ do
           r0 <- evaluateFn v . Lit =<< abcObjLit0 o
