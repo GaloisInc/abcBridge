@@ -64,6 +64,8 @@ import qualified Data.Map as Map
 import           Data.IORef
 import qualified Data.AIG as AIG
 import           Data.AIG.Interface (LitView(..))
+import qualified Data.AIG.Trace as Tr
+
 import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Unboxed as V
 import qualified Data.Vector.Unboxed.Mutable as VM
@@ -146,6 +148,10 @@ true = L giaManConst1Lit
 -- | Constant false node
 false :: Lit s
 false = L giaManConst0Lit
+
+instance Tr.Traceable Lit where
+  compareLit x y = compare x y
+  showLit x = show (unGiaLit (_unLit x))
 
 instance AIG.IsAIG Lit GIA where
 

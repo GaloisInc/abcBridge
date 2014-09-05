@@ -74,6 +74,7 @@ import Data.ABC.Internal.VecPtr
 
 import qualified Data.AIG as AIG
 import           Data.AIG.Interface (LitView(..))
+import qualified Data.AIG.Trace as Tr
 import Data.ABC.Util
 
 newtype AIG s = AIG { _ntkPtr :: ForeignPtr Abc_Ntk_t_ }
@@ -221,6 +222,10 @@ litView (Lit l) = do
               else return (And (Lit x) (Lit y))
        else fail "invalid AIG literal: non-and node"
     _ -> fail ("invalid AIG literal: "++show ty++" "++show i++" "++show c)
+
+instance Tr.Traceable Lit where
+  compareLit x y = compare x y
+  showLit x = show (unLit x)
 
 
 instance AIG.IsAIG Lit AIG where
