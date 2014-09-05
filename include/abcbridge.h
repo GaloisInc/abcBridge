@@ -27,3 +27,5 @@ int AbcBridge_Aig_ManNObj(Aig_Man_t* p, Aig_Type_t tp);
 Aig_Obj_t * AbcBridge_Aig_ManCi( Aig_Man_t * p, int v );
 Aig_Obj_t * AbcBridge_Aig_ManCo( Aig_Man_t * p, int v );
 int AbcBridge_Aig_ObjId( Aig_Obj_t * pObj );
+
+void AbcBridge_Gia_ClearGiaObj( Gia_Obj_t* pObj );

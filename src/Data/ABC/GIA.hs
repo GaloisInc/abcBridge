@@ -257,21 +257,72 @@ pureEvaluateFn v (L l) = assert inRange (c /= (v V.! i))
 
 -- | Run computation with a Gia_Man_t containing the given network.
 withNetworkPtr :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
-withNetworkPtr (AIG.Network ntk out) m = do
+withNetworkPtr = withNetworkPtr_Munge
+
+-- A safer alternative...
+--withNetworkPtr = withNetworkPtr_Copy
+
+
+
+-- This is a safer method for implementing withNetworkPtr; it copies the
+-- entire graph before adding the required COs and disposes of the copied
+-- graph afterwards.  Obviously, this has substantial memory usage implications.
+_withNetworkPtr_Copy :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
+_withNetworkPtr_Copy (AIG.Network ntk out) m = do
+  withGIAPtr ntk $ \p -> do
+     ncos <- vecIntSize =<< giaManCos p
+     assert( ncos == 0 ) $
+     bracket (giaManDupNormalize p) giaManStop 
+         (\p' -> mapM_ (\(L o) -> giaManAppendCo p' o) out >> m p')
+
+
+-- This is a somewhat risky method to build a Gia network containing
+-- the required output COs.  Initially, we assume the network has no COs.
+-- Then, we add enough COs to account for the list of "out" literals.
+-- We then run the given computation on the updated network; this computation
+-- is assumed not to change the structure of the graph.  Finally, we
+-- "deallocate" the COs we added.  This final step is a bit dubious; the Gia
+-- graph data was not designed with deallocation in mind, and we are abusing
+-- our ability to reach in and muck with the details.
+
+withNetworkPtr_Munge :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
+withNetworkPtr_Munge (AIG.Network ntk out) m = do
   withGIAPtr ntk $ \p -> do
     -- Get original number of objects
     orig_oc <- readAt giaManNObjs p
+
     let reset = do
-          -- Reset object count.
+          n <- readAt giaManNObjs p
+
+          cos <- giaManCos p
+          ncos <- vecIntSize cos
+
+          -- it should be that the only new objects are the COs we add
+          assert (orig_oc == n - ncos) $ do
+
+          -- clear the objects for reuse
+          forN_ (fromIntegral ncos) $ \i -> do
+             var <- vecIntEntry cos (fromIntegral i)
+             -- Assert that all the objects we are clearing are above the old object count; that is,
+             -- they must have been allocated when we shoved in the new COs.
+             assert (var >= orig_oc) $ do
+             -- clear the memory assocaited with the GIA object
+             clearGiaObj =<< giaManObj p (GiaVar var)
+
+          -- empty the CO vector
+          clearVecInt cos
+
+          -- Reset object count, effectively deallocating the objects
           writeAt giaManNObjs p orig_oc
-          -- Clear Cos
-          clearVecInt =<< giaManCos p
+
     -- Run computation, then reset.
     flip finally reset $ do
       -- Add combinational outputs.
-      mapM_ (\(L o) -> giaManAppendCo p o) out
+      out' <- mapM (\(L o) -> giaManAppendCo p o) out
+
       -- Run computation.
       m p
+
 
 -- | Run a computation with an AIG man created from a GIA netowrk.
 giaNetworkAsAIGMan :: AIG.Network Lit GIA
