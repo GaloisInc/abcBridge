@@ -126,6 +126,22 @@ basic_tests proxy@(ABC.Proxy f) = f $
      case rf of
        ABC.Sat{} -> fail "falseLit is sat"
        ABC.Unsat{} -> return ()
+
+  , testCase "aiger_twice" $
+      ABC.SomeGraph g <- ABC.newGraph proxy
+
+      tmpdir <- getTemporaryDirectory
+      (path, hndl) <- openTempFile tmpdir "aiger.aig"
+      hClose hndl
+
+      x <- ABC.newInput g
+
+      ABC.writeAiger (path++"1") (ABC.Network g [ABC.falseLit g, ABC.falseLit g])
+
+      y <- ABC.newInput g
+      r <- ABC.and g x y
+
+      ABC.writeAiger (path++"2") (ABC.Network g [r])
   ]
 
 cecNetwork :: ABC.IsAIG l g => ABC.Proxy l g -> IO (ABC.Network l g)
