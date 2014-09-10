@@ -2,13 +2,13 @@ module Tests.QBF
   ( qbf_tests
   ) where
 
-import Test.Framework
-import Test.Framework.Providers.HUnit
+import Test.Tasty
+import Test.Tasty.HUnit
 
 import qualified Data.ABC as ABC
 import qualified Data.ABC.GIA as GIA
 
-qbf_tests :: [Test.Framework.Test]
+qbf_tests :: [TestTree]
 qbf_tests =
   [ testCase "test_qbf_and" $ do
       ABC.SomeGraph g <- GIA.newGIA

@@ -7,10 +7,10 @@ import Control.Exception
 import Control.Monad
 import System.Directory
 import System.IO
-import Test.Framework
-import Test.Framework.Providers.HUnit
-import Test.Framework.Providers.QuickCheck2
-import Test.HUnit (assertEqual)
+
+import Test.Tasty
+import Test.Tasty.HUnit
+import Test.Tasty.QuickCheck
 import Test.QuickCheck
 
 import qualified Data.ABC as ABC
@@ -20,7 +20,7 @@ import qualified Data.AIG.Trace as Tr
 tryIO :: IO a -> IO (Either IOException a)
 tryIO = try
 
-basic_tests :: Tr.Traceable l => ABC.Proxy l g -> [Test.Framework.Test]
+basic_tests :: Tr.Traceable l => ABC.Proxy l g -> [TestTree]
 basic_tests proxy@(ABC.Proxy f) = f $
   [ testCase "test_true" $ do
       ABC.SomeGraph g <- ABC.newGraph proxy
@@ -148,8 +148,7 @@ basic_tests proxy@(ABC.Proxy f) = f $
       ABC.writeAiger (path++"2") (ABC.Network g [r])
 
   , testCase "aiger_eval" $ do
-      Tr.withNewGraphTracing proxy "trace.log" $ \g -> do
-      --ABC.SomeGraph g <- ABC.newGraph proxy
+      ABC.SomeGraph g <- ABC.newGraph proxy
 
       tmpdir <- getTemporaryDirectory
       (path, hndl) <- openTempFile tmpdir "aiger.aig"

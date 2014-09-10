@@ -4,8 +4,8 @@ module Tests.Operations
   ) where
 
 import qualified Data.AIG as AIG
-import Test.Framework
-import Test.Framework.Providers.QuickCheck2
+import Test.Tasty
+import Test.Tasty.QuickCheck
 import Test.QuickCheck
 
 bv :: AIG.IsAIG l g => g s -> Int -> Integer -> AIG.BV (l s)
@@ -18,7 +18,7 @@ bin_test :: String
             -- ^ Bitvector operation
          -> (Integer -> Integer -> Integer)
             -- ^ Concrete op
-         -> Test.Framework.Test
+         -> TestTree
 bin_test nm proxy@(AIG.Proxy f) bv_op c_op = f $
   testProperty nm $ \u v -> ioProperty $ do
     let w = 10
@@ -27,7 +27,7 @@ bin_test nm proxy@(AIG.Proxy f) bv_op c_op = f $
     let expected = (c_op u v) `mod` (2^w)
     return $ Just expected == AIG.asUnsigned g z
 
-op_tests :: AIG.Proxy l g -> [Test.Framework.Test]
+op_tests :: AIG.Proxy l g -> [TestTree]
 op_tests proxy@(AIG.Proxy f) = f $
   [ testProperty "test_bv" $ \u -> ioProperty $ do
       AIG.SomeGraph g <- AIG.newGraph proxy

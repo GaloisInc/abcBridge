@@ -129,12 +129,20 @@ test-suite abc-test
     abcBridge,
     aig,
     directory,
-    HUnit,
-    QuickCheck >= 2.7,
-    test-framework,
-    test-framework-hunit,
-    test-framework-quickcheck2,
-    vector
+    vector,
+
+    -- , tasty >= 0.10
+    -- , tasty-ant-xml >= 1.0.0.10
+
+    -- note: temporary, until tasty-ant-xml is updated to use tasty >= 0.10
+    tasty == 0.9.*,
+    tasty-ant-xml == 1.0.0.9,
+    tasty-hunit,
+    tasty-quickcheck,
+    QuickCheck >= 2.7
+
+
+
 
 Executable long-test
   hs-source-dirs: tests
