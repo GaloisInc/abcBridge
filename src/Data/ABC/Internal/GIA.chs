@@ -94,6 +94,7 @@ module Data.ABC.Internal.GIA (
     -- ** giaDup.c
     , giaManMiter
     , giaDupLit
+    , giaManDupNormalize
     -- ** giaHash.c
     , giaManHashAlloc
     , giaManHashStart
@@ -107,6 +108,9 @@ module Data.ABC.Internal.GIA (
     , p_giaManStop
     , giaManCleanup
     , giaManFillValue
+
+      -- ** misc
+    , clearGiaObj
     ) where
 
 import Control.Applicative
@@ -376,7 +380,7 @@ giaManAppendCo m (GiaLit l) = GiaLit <$> giaManAppendCo_ m l
 -- | Return object associated with gia var.
 giaManObj :: Gia_Man_t -> GiaVar -> IO Gia_Obj_t
 giaManObj m (GiaVar v) = do
-  cnt <- giaManCiNum m
+  cnt <- giaManObjNum m
   assert (0 <= v && v < cnt) $ do
     (`incObjPtr` v) <$> giaManConst0 m
 
@@ -443,6 +447,9 @@ giaObjId p pObj = do
     , `Bool' -- fVerbose
     } -> `Gia_Man_t' id #}
 
+foreign import ccall unsafe "Gia_ManDupNormalize" giaManDupNormalize
+  :: Gia_Man_t -> IO Gia_Man_t
+
 -- | @giaManDupDfsLazyLit pNew p l@ copies a lit @l@ in @p@ to @pNew@
 -- and returns the lit in @pNew@.
 giaDupLit :: Gia_Man_t -> Gia_Man_t -> GiaLit -> IO GiaLit
@@ -485,6 +492,8 @@ foreign import ccall unsafe "Gia_ManStop"
 foreign import ccall unsafe "gia.h &Gia_ManStop"
     p_giaManStop :: FunPtr (Gia_Man_t -> IO ())
 
+foreign import ccall unsafe "AbcBridge_Gia_ClearGiaObj"
+    clearGiaObj :: Gia_Obj_t -> IO ()
 
 {#fun Gia_ManStart as ^ { id `CInt' } -> `Gia_Man_t' id #}
 

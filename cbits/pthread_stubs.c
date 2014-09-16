@@ -13,12 +13,33 @@
 
 #ifdef _WIN32
 #include "../abc-build/lib/pthread.h"
+
 #else
+
 #include <unistd.h>
 #include <pthread.h>
+
+/* Declare these symbols as weak on platforms that have weak symbols. */
+int __attribute__((weak))
+  pthread_create(pthread_t * thread, const pthread_attr_t* attr, void *(*start_routine)(void *), void* arg );
+
+void __attribute__((weak)) pthread_exit( void* value );
+int __attribute__((weak)) pthread_equal(pthread_t t1, pthread_t t2);
+int __attribute__((weak)) pthread_detach(pthread_t t);
+int __attribute__((weak)) pthread_join(pthread_t t, void** v);
+int __attribute__((weak)) pthread_cancel(pthread_t t);
+pthread_t __attribute__((weak)) pthread_self(void);
+
+int __attribute__((weak)) pthread_mutex_lock( pthread_mutex_t *m );
+int __attribute__((weak)) pthread_mutex_unlock( pthread_mutex_t *m );
+int __attribute__((weak)) pthread_mutex_trylock( pthread_mutex_t *m );
+int __attribute__((weak)) pthread_mutex_destroy( pthread_mutex_t *m );
+int __attribute__((weak)) pthread_mutex_init( pthread_mutex_t *m, const pthread_mutexattr_t *attr );
+int __attribute__((weak)) pthread_mutextattr_init( pthread_mutexattr_t *attr );
+int __attribute__((weak)) pthread_mutextattr_destroy( pthread_mutexattr_t *attr );
 #endif
 
-int pthread_create(pthread_t * thread, const pthread_attr_t* attr, void *(*start_routine)(void *), void* arg ) { 
+int pthread_create(pthread_t * thread, const pthread_attr_t* attr, void *(*start_routine)(void *), void* arg ) {
   fprintf(stderr,"ABC tried to use pthreads on a system not configured with a pthread library... sorry.");
   exit(1);
 }

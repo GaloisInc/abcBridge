@@ -3,6 +3,7 @@
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 {- |
 Module      : Data.ABC.GIA
@@ -35,7 +36,7 @@ module Data.ABC.GIA
     , false
     , proxy
       -- * Inspection
-    , LitView(..)
+    , AIG.LitView(..)
     , litView
       -- * File IO
     , readAiger
@@ -53,11 +54,18 @@ module Data.ABC.GIA
     ) where
 
 import Prelude hiding (and, not, or)
+import qualified Prelude
+
 
 import Control.Exception hiding (evaluate)
 import Control.Monad
 import Control.Applicative
+import qualified Data.Map as Map
+import           Data.IORef
 import qualified Data.AIG as AIG
+import           Data.AIG.Interface (LitView(..))
+import qualified Data.AIG.Trace as Tr
+
 import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Unboxed as V
 import qualified Data.Vector.Unboxed.Mutable as VM
@@ -86,6 +94,7 @@ enumRange i n | i == n = []
 newtype GIA s = GIA { _giaPtr :: ForeignPtr Gia_Man_t_ }
 
 newtype Lit s = L { _unLit :: GiaLit }
+  deriving (Eq, Storable, Ord)
 
 proxy :: AIG.Proxy Lit GIA
 proxy = AIG.Proxy id
@@ -140,6 +149,10 @@ true = L giaManConst1Lit
 false :: Lit s
 false = L giaManConst0Lit
 
+instance Tr.Traceable Lit where
+  compareLit x y = compare x y
+  showLit x = show (unGiaLit (_unLit x))
+
 instance AIG.IsAIG Lit GIA where
 
   newGraph _ = newGIA
@@ -153,10 +166,15 @@ instance AIG.IsAIG Lit GIA where
   mux g (L c) (L x) (L y) = withGIAPtr g $ \p -> L <$> giaManHashMux p c x y
 
   inputCount g = fromIntegral <$> withGIAPtr g giaManCiNum
-  getInput g i = withGIAPtr g $ \p ->
-    L . giaVarLit <$> giaManCiVar p (fromIntegral i)
+  getInput g i =
+    withGIAPtr g $ \p -> do
+        cnt <- giaManCiNum p
+        assert (0 <= i && i < fromIntegral cnt) $
+          L . giaVarLit <$> giaManCiVar p (fromIntegral i)
 
   aigerNetwork _ = readAiger
+
+  abstractEvaluateAIG (GIA fp) = litEvaluator fp
 
   writeAiger path g = do
     withNetworkPtr g $ \p -> do
@@ -173,6 +191,16 @@ instance AIG.IsAIG Lit GIA where
   cec gx gy = do
     withNetworkPtr gx $ \x -> do
     withNetworkPtr gy $ \y -> do
+
+    input_count_x <- giaManCiNum x
+    input_count_y <- giaManCiNum y
+
+    output_count_x <- vecIntSize =<< giaManCos x
+    output_count_y <- vecIntSize =<< giaManCos y
+
+    assert (input_count_x == input_count_y) $ do
+    assert (output_count_x == output_count_y) $ do
+
     bracket (giaManMiter x y 0 True False False False) giaManStop $ \m -> do
     r <- cecManVerify m cecManCecDefaultParams
     case r of
@@ -229,21 +257,72 @@ pureEvaluateFn v (L l) = assert inRange (c /= (v V.! i))
 
 -- | Run computation with a Gia_Man_t containing the given network.
 withNetworkPtr :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
-withNetworkPtr (AIG.Network ntk out) m = do
+withNetworkPtr = withNetworkPtr_Munge
+
+-- A safer alternative...
+--withNetworkPtr = withNetworkPtr_Copy
+
+
+
+-- This is a safer method for implementing withNetworkPtr; it copies the
+-- entire graph before adding the required COs and disposes of the copied
+-- graph afterwards.  Obviously, this has substantial memory usage implications.
+_withNetworkPtr_Copy :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
+_withNetworkPtr_Copy (AIG.Network ntk out) m = do
+  withGIAPtr ntk $ \p -> do
+     ncos <- vecIntSize =<< giaManCos p
+     assert( ncos == 0 ) $ do
+     bracket (giaManDupNormalize p) giaManStop 
+         (\p' -> mapM_ (\(L o) -> giaManAppendCo p' o) out >> m p')
+
+
+-- This is a somewhat risky method to build a Gia network containing
+-- the required output COs.  Initially, we assume the network has no COs.
+-- Then, we add enough COs to account for the list of "out" literals.
+-- We then run the given computation on the updated network; this computation
+-- is assumed not to change the structure of the graph.  Finally, we
+-- "deallocate" the COs we added.  This final step is a bit dubious; the Gia
+-- graph data was not designed with deallocation in mind, and we are abusing
+-- our ability to reach in and muck with the details.
+
+withNetworkPtr_Munge :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
+withNetworkPtr_Munge (AIG.Network ntk out) m = do
   withGIAPtr ntk $ \p -> do
     -- Get original number of objects
     orig_oc <- readAt giaManNObjs p
+
     let reset = do
-          -- Reset object count.
+          n <- readAt giaManNObjs p
+
+          cov <- giaManCos p
+          ncos <- vecIntSize cov
+
+          -- it should be that the only new objects are the COs we add
+          assert (orig_oc == n - ncos) $ do
+
+          -- clear the objects for reuse
+          forN_ (fromIntegral ncos) $ \i -> do
+             var <- vecIntEntry cov (fromIntegral i)
+             -- Assert that all the objects we are clearing are above the old object count; that is,
+             -- they must have been allocated when we shoved in the new COs.
+             assert (var >= orig_oc) $ do
+             -- clear the memory assocaited with the GIA object
+             clearGiaObj =<< giaManObj p (GiaVar var)
+
+          -- empty the CO vector
+          clearVecInt cov
+
+          -- Reset object count, effectively deallocating the objects
           writeAt giaManNObjs p orig_oc
-          -- Clear Cos
-          clearVecInt =<< giaManCos p
+
     -- Run computation, then reset.
     flip finally reset $ do
       -- Add combinational outputs.
       mapM_ (\(L o) -> giaManAppendCo p o) out
+
       -- Run computation.
       m p
+
 
 -- | Run a computation with an AIG man created from a GIA netowrk.
 giaNetworkAsAIGMan :: AIG.Network Lit GIA
@@ -270,14 +349,43 @@ fanin1Lit o v = do
   c0 <- giaObjFaninC1 o
   return $ giaLitNotCond (giaVarLit v0) c0
 
--- | A representation of a lit's strcture.
-data LitView l
-   = And !l !l
-   | NotAnd !l !l
-   | Input !Int
-   | NotInput !Int
-   | TrueLit
-   | FalseLit
+
+litEvaluator :: ForeignPtr Gia_Man_t_ -> (LitView a -> IO a) -> IO (Lit s -> IO a)
+litEvaluator fp viewFn = do
+  let memo r o t = do
+        m <- readIORef r
+        writeIORef r $! Map.insert o t m
+        return t
+  r <- newIORef Map.empty
+  let objTerm o = do
+        --putStrLn $ "objTerm " ++ show o
+        m0 <- readIORef r
+        case Map.lookup o m0 of
+          Just t -> return t
+          _ -> do
+            let c = giaIsComplement o
+            let o' = if c then giaRegular o else o
+            isTerm <- giaObjIsTerm o'
+            d0 <- giaObjDiff0 o'
+            case () of
+              _ | Prelude.not isTerm && d0 /= gia_none -> do -- And gate
+                    x <- objTerm =<< giaObjChild0 o'
+                    y <- objTerm =<< giaObjChild1 o'
+                    let and_ = if c then NotAnd else And
+                    memo r o =<< viewFn (and_ x y)
+                | isTerm && d0 /= gia_none -> do -- Primary output
+                    -- This is a primary output, so we just get the lit
+                    -- for the gate that it is attached to.
+
+                    -- FIXME? is this the right thing to do WRT complement?
+                    objTerm =<< giaObjChild0 o'
+                | Prelude.not isTerm -> do -- Constant value
+                    memo r o =<< viewFn (if c then TrueLit else FalseLit)
+                | otherwise -> do -- Primary input
+                    memo r o =<< viewFn . (if c then NotInput else Input) . fromIntegral
+                              =<< giaObjDiff1 o'
+  return $ (\(L l) -> withForeignPtr fp $ \p -> objTerm =<< giaObjFromLit p l)
+
 
 -- | Return a representation of how lit was constructed.
 litView :: GIA s -> Lit s -> IO (LitView (Lit s))

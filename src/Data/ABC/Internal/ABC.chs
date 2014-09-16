@@ -36,6 +36,8 @@ module Data.ABC.Internal.ABC
     , abcNtkObjs
     , abcNtkPis
     , abcNtkPos
+    , abcNtkCos
+    , abcNtkCis
     , abcNtkObj
     , abcNtkManFunc
     , abcNtkModel
@@ -94,6 +96,7 @@ module Data.ABC.Internal.ABC
     -- ** abcObj.c
     -- | Functions for manipulating objects in networks.
     , abcNtkDeleteObj
+    , abcNtkDeleteObjPo
     -- ** abcProve.c
     -- | Functions for performing SAT solving.
     , abcNtkIvyProve
@@ -376,6 +379,10 @@ foreign import ccall unsafe "&Abc_NtkDelete"
 -- abcObj.c
 
 {#fun Abc_NtkDeleteObj as ^
+    { id `Abc_Obj_t'
+    } -> `()' #}
+
+{#fun Abc_NtkDeleteObjPo as ^
     { id `Abc_Obj_t'
     } -> `()' #}
 

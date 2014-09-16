@@ -7,18 +7,20 @@ import Control.Exception
 import Control.Monad
 import System.Directory
 import System.IO
-import Test.Framework
-import Test.Framework.Providers.HUnit
-import Test.Framework.Providers.QuickCheck2
-import Test.HUnit (assertEqual)
+
+import Test.Tasty
+import Test.Tasty.HUnit
+import Test.Tasty.QuickCheck
 import Test.QuickCheck
 
 import qualified Data.ABC as ABC
+import qualified Data.AIG.Trace as Tr
+
 
 tryIO :: IO a -> IO (Either IOException a)
 tryIO = try
 
-basic_tests :: ABC.Proxy l g -> [Test.Framework.Test]
+basic_tests :: Tr.Traceable l => ABC.Proxy l g -> [TestTree]
 basic_tests proxy@(ABC.Proxy f) = f $
   [ testCase "test_true" $ do
       ABC.SomeGraph g <- ABC.newGraph proxy
@@ -77,6 +79,40 @@ basic_tests proxy@(ABC.Proxy f) = f $
       n2 <- ABC.aigerNetwork proxy path
       assertEqual "test_aiger" ABC.Valid =<< ABC.cec n1 n2
       removeFile path
+
+  , testProperty "unfold_fold" $ \litForest -> ioProperty $ do
+      let maxInput = foldr max 0 $ map ABC.getMaxInput litForest
+
+      n1@(ABC.Network g ls) <- ABC.buildNetwork proxy litForest
+
+      litForest' <- ABC.toLitForest g ls
+
+      -- NB: we cannot just compare litForest and litForest' for syntactic equality
+      -- due to simplifications performed when building the AIG.  Also, the following
+      -- commented line does not work because references to inputs may also be removed
+      -- during simpification, resulting in a different number of inputs.
+      --n2 <- ABC.buildNetwork proxy litForest'
+
+      -- so do this instead...
+      (ABC.SomeGraph g') <- ABC.newGraph proxy
+      forM_ [0 .. maxInput] (\_ -> ABC.newInput g')
+      ls' <- ABC.fromLitForest g' litForest'
+      let n2 = ABC.Network g' ls'
+
+      result <- ABC.cec n1 n2
+      return $ result == ABC.Valid
+
+  , testCase "fold_unfold" $ do
+      (ABC.Network g l) <- cecNetwork proxy
+      inputs <- ABC.inputCount g
+      litForest <- ABC.toLitForest g l
+
+      (ABC.SomeGraph g') <- ABC.newGraph proxy
+      forM_ [0 .. inputs-1] (\_ -> ABC.newInput g')
+      l' <- ABC.fromLitForest g' litForest
+
+      assertEqual "fold_unfold" ABC.Valid =<< ABC.cec (ABC.Network g l) (ABC.Network g' l')
+
   , testCase "bad_aiger" $ do
       me <- tryIO $ ABC.aigerNetwork proxy "Nonexistent AIGER!"
       case me of
@@ -88,10 +124,59 @@ basic_tests proxy@(ABC.Proxy f) = f $
      case rt of
        ABC.Sat{} -> return ()
        ABC.Unsat{} -> fail "trueLit is unsat"
+       ABC.SatUnknown{} -> fail "trueLit is unknown"
      rf <- ABC.checkSat g (ABC.falseLit g)
      case rf of
        ABC.Sat{} -> fail "falseLit is sat"
        ABC.Unsat{} -> return ()
+       ABC.SatUnknown{} -> fail "falseLit is unknown"
+
+  , testCase "aiger_twice" $ do
+      ABC.SomeGraph g <- ABC.newGraph proxy
+
+      tmpdir <- getTemporaryDirectory
+      (path, hndl) <- openTempFile tmpdir "aiger.aig"
+      hClose hndl
+
+      x <- ABC.newInput g
+
+      ABC.writeAiger (path++"1") (ABC.Network g [ABC.falseLit g, ABC.falseLit g])
+
+      y <- ABC.newInput g
+      r <- ABC.and g x y
+
+      ABC.writeAiger (path++"2") (ABC.Network g [r])
+
+  , testCase "aiger_eval" $ do
+      ABC.SomeGraph g <- ABC.newGraph proxy
+
+      tmpdir <- getTemporaryDirectory
+      (path, hndl) <- openTempFile tmpdir "aiger.aig"
+      hClose hndl
+
+      x <- fmap ABC.bvFromList $ sequence $ replicate 32 (ABC.newInput g)
+      y <- ABC.zipWithM (ABC.lAnd' g) x (ABC.bvFromInteger g 32 0x12345678)
+
+      ABC.writeAiger path (ABC.Network g (ABC.bvToList y))
+
+      let tobool :: Int -> Bool
+          tobool i = if i == 0 then False else True
+
+      let inputs = map tobool $ reverse $
+                   [ 0,1,1,0,1,0,0,0,
+                     0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0,
+                     0,0,0,0,0,0,0,0 ]
+
+      let outputs = fmap tobool $ reverse $
+                    [ 0,0,0,0,1,0,0,0,
+                      0,0,0,0,0,0,0,0,
+                      0,0,0,0,0,0,0,0,
+                      0,0,0,0,0,0,0,0 ]
+
+      z <- ABC.evaluate (ABC.Network g (ABC.bvToList y)) inputs
+
+      assertEqual "aiger_eval" outputs z
   ]
 
 cecNetwork :: ABC.IsAIG l g => ABC.Proxy l g -> IO (ABC.Network l g)

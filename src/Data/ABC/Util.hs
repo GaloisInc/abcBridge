@@ -18,5 +18,5 @@ forN_ i m | i <= 0 = return ()
 
 forN :: Monad m => Int -> (Int -> m a) -> m [a]
 forN i0 m = go [] i0
-  where go l i | i <= 0 = return (reverse l)
+  where go l i | i <= 0 = return l -- NB: don't reverse the list
                | otherwise = m (i-1) >>= \e -> go (e:l) (i-1)

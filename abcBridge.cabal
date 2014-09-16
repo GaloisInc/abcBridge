@@ -1,5 +1,5 @@
 Name:               abcBridge
-Version:            0.10.0.0
+Version:            0.10.9.9
 Synopsis:           Bindings for ABC, A System for Sequential
                     Synthesis and Verification
 Description:        Bindings for ABC focused on creating And-Inverter
@@ -23,7 +23,7 @@ extra-source-files:
 
 flag enable-pthreads
   Description: Turn on multithreading
-  Default: False
+  Default: True
 
 -- Ugh. Temporary fix to make Hackage happy.
 --flag enable-hpc
@@ -62,7 +62,7 @@ library
                         FlexibleContexts,
                         MultiParamTypeClasses,
                         EmptyDataDecls
-  Ghc-options:          -Wall
+  Ghc-options:          -Wall  -auto-all -caf-all -fno-ignore-asserts
   -- -U__BLOCKS__ to work around https://github.com/haskell/c2hs/issues/29
   Cc-options:           -U__BLOCKS__ -U__has_attribute -w
 
@@ -89,6 +89,7 @@ library
   Build-depends:
     base >= 4,
     aig,
+    containers,
     directory,
     vector
   Extra-libraries:      abc
@@ -132,12 +133,14 @@ test-suite abc-test
     abcBridge,
     aig,
     directory,
-    HUnit,
-    QuickCheck >= 2.7,
-    test-framework,
-    test-framework-hunit,
-    test-framework-quickcheck2,
-    vector
+    vector,
+
+    tasty,
+    tasty-ant-xml,
+    tasty-hunit,
+    tasty-quickcheck,
+    QuickCheck >= 2.7
+
 
 Executable long-test
   hs-source-dirs: tests

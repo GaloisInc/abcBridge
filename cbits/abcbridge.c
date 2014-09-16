@@ -70,6 +70,10 @@ void AbcBridge_NtkPtrDelete( Abc_Ntk_t **pp ) {
     Abc_NtkDelete(*pp);
 }
 
+void AbcBridge_Gia_ClearGiaObj( Gia_Obj_t* pObj ) {
+  memset( pObj, 0, sizeof(Gia_Obj_t) );
+}
+
 void AbcBridge_Gia_MmFixedStop( Gia_MmFixed_t *p ) {
     Gia_MmFixedStop(p, 0);
 }

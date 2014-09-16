@@ -22,6 +22,7 @@ module Data.ABC.Internal.VecPtr (
     , vecPtrSize
     , vecPtrArray
     , vecPtrEntry
+    , clearVecPtr
     ) where
 
 #include <stdio.h>
@@ -49,6 +50,9 @@ vecPtrSize v = fromIntegral `fmap` readAt vecSizeField v
 
 vecPtrArray :: Vec_Ptr_t -> IO (Ptr (Ptr a))
 vecPtrArray v = castPtr `fmap` {#get Vec_Ptr_t->pArray #} v
+
+clearVecPtr :: Vec_Ptr_t -> IO ()
+clearVecPtr v = writeAt vecSizeField v 0
 
 vecPtrEntry :: Vec_Ptr_t -> Int -> IO (Ptr a)
 vecPtrEntry v i = do
