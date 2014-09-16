@@ -131,17 +131,11 @@ test-suite abc-test
     directory,
     vector,
 
-    -- , tasty >= 0.10
-    -- , tasty-ant-xml >= 1.0.0.10
-
-    -- note: temporary, until tasty-ant-xml is updated to use tasty >= 0.10
-    tasty == 0.9.*,
-    tasty-ant-xml == 1.0.0.9,
+    tasty,
+    tasty-ant-xml,
     tasty-hunit,
     tasty-quickcheck,
     QuickCheck >= 2.7
-
-
 
 
 Executable long-test
