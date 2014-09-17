@@ -18,7 +18,6 @@ extra-source-files:
   include/*.h
   cbits/*.c
   scripts/*.sh
-  scripts/*.txt
   tests/eijk.S298.S.aig
 
 flag enable-pthreads

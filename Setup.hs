@@ -4,11 +4,12 @@ import Distribution.Simple.Utils (rawSystemExit, rawSystemExitWithEnv, installOr
         installExecutableFile, copyFileVerbose, createDirectoryIfMissingVerbose)
 import Distribution.Simple.LocalBuildInfo (
         LocalBuildInfo(..), InstallDirs(..), absoluteInstallDirs)
-import Distribution.PackageDescription (PackageDescription(..),
+import Distribution.PackageDescription (PackageDescription(..), GenericPackageDescription(..),
         HookedBuildInfo(..), BuildInfo(..), emptyBuildInfo,
         updatePackageDescription, FlagAssignment(..), FlagName(..))
 import Distribution.Verbosity (verbose, Verbosity(..))
 import Distribution.System (OS(..), Arch(..), Platform (..), buildOS, buildPlatform)
+import Data.Version( Version, showVersion )
 import System.Directory
 import System.FilePath
 import System.Environment( getEnvironment )
@@ -22,8 +23,8 @@ import Control.Monad(when)
 -- to handle the ABC source tree.  We do this by editing, at runtime, the
 -- cabal package description to include the ABC sources files to `extra-source-files`
 -- (so `cabal sdist` works as expected), and to add the ABC source tree directories
--- to `include-dirs`.  This is done by reading the files `scripts/abc-sources.txt`
--- and `scripts/abc-incl-dirs.txt`, which are set up by `scripts/setup-abc.sh`.
+-- to `include-dirs`.  This is done by reading the files `abc-build/abc-sources.txt`
+-- and `abc-build/abc-incl-dirs.txt`, which are set up by `scripts/setup-abc.sh`.
 --
 -- Finally, we must also include some information about where do find the libabc.a
 -- and libabc.dll files.
@@ -33,22 +34,26 @@ import Control.Monad(when)
 -- "in flight" inside each of the various hooks.
 
 main = defaultMainWithHooks simpleUserHooks
-    { preConf  = \a f -> let v = fromFlag $ configVerbosity f
-                             fs = configConfigurationsFlags f
-                          in setupAbc v >> buildAbc v fs >> preConf simpleUserHooks a f
-
-    , preSDist = \a f -> let v = fromFlag $ sDistVerbosity f
-                          in setupAbc v >> preSDist simpleUserHooks a f
-
-    , postConf = \a f pkg_desc lbi -> do
+    { postConf = \a f pkg_desc lbi -> do
                     pkg_desc' <- abcPkgDesc pkg_desc
                     postConf simpleUserHooks a f pkg_desc' lbi
+
+    ,  confHook = \(gpkg_desc, hbi) f -> do
+                    let v = fromFlag $ configVerbosity f
+                    let fs = configConfigurationsFlags f
+                    setupAbc v (packageDescription gpkg_desc)
+                    buildAbc v fs
+                    confHook simpleUserHooks (gpkg_desc, hbi) f
+
+    , sDistHook = \pkg_desc lbi h f -> do
+                    let v = fromFlag $ sDistVerbosity f
+                    setupAbc v pkg_desc
+                    pkg_desc' <- abcPkgDesc pkg_desc
+                    sDistHook simpleUserHooks pkg_desc' lbi h f
+
     , buildHook = \pkg_desc lbi h f -> do
                     pkg_desc' <- abcPkgDesc pkg_desc
                     buildHook simpleUserHooks pkg_desc' lbi h f
-    , sDistHook = \pkg_desc lbi h f -> do
-                    pkg_desc' <- abcPkgDesc pkg_desc
-                    sDistHook simpleUserHooks pkg_desc' lbi h f
     , haddockHook = \pkg_desc lbi h f -> do
                     pkg_desc' <- abcPkgDesc pkg_desc
                     haddockHook simpleUserHooks pkg_desc' lbi h f
@@ -83,8 +88,8 @@ static_dir = "dist"</>"build"
 abcPkgDesc :: PackageDescription -> IO PackageDescription
 abcPkgDesc pkg_desc = do
   cwd <- getCurrentDirectory
-  abcSrcFiles <- fmap lines $ readFile "scripts/abc-sources.txt"
-  abcInclDirs <- fmap lines $ readFile "scripts/abc-incl-dirs.txt"
+  abcSrcFiles <- fmap lines $ readFile $ "abc-build" </> "abc-sources.txt"
+  abcInclDirs <- fmap lines $ readFile $ "abc-build" </> "abc-incl-dirs.txt"
   let pg' = updatePackageDescription (libDirAbc cwd abcInclDirs) pkg_desc
   return pg'{ extraSrcFiles = extraSrcFiles pg' ++ abcSrcFiles 
             }
@@ -102,12 +107,14 @@ onWindows act = case buildPlatform of
                   _                  -> return ()
 
 -- If necessary, fetch the ABC sources and prepare for building
-setupAbc :: Verbosity -> IO ()
-setupAbc verbosity = do
+setupAbc :: Verbosity -> PackageDescription -> IO ()
+setupAbc verbosity pkg_desc = do
+    let version = pkgVersion $ package $ pkg_desc
+    let packageVersion = "PACKAGE_VERSION"
     env <- getEnvironment
     rawSystemExitWithEnv verbosity "sh"
-        ("scripts/setup-abc.sh" : (tail . words . show $ buildPlatform))
-        env
+        ( ("scripts" </> "setup-abc.sh") : (tail . words . show $ buildPlatform))
+        ([(packageVersion, showVersion version)] ++ filter ((/=packageVersion) . fst) env)
 
 -- Build the ABC library and put the files in the expected places
 buildAbc :: Verbosity -> FlagAssignment -> IO ()
@@ -115,11 +122,11 @@ buildAbc verbosity fs = do
     let pthreads = maybe "0" (\x -> if x then "1" else "0") $ lookup (FlagName "enable-pthreads") fs
     env <- getEnvironment
     rawSystemExitWithEnv verbosity "sh"
-        ("scripts/build-abc.sh" : (tail . words . show $ buildPlatform))
+        (("scripts"</>"build-abc.sh") : (tail . words . show $ buildPlatform))
         ([("PTHREADS",pthreads)] ++ filter ((/="PTHREADS") . fst) env)
     createDirectoryIfMissingVerbose verbosity True static_dir
-    copyFileVerbose verbosity "abc-build/libabc.a" (static_dir</>"libabc.a")
-    onWindows $ copyFileVerbose verbosity "abc-build/libabc.dll" (static_dir</>"abc.dll")
+    copyFileVerbose verbosity ("abc-build"</>"libabc.a") (static_dir</>"libabc.a")
+    onWindows $ copyFileVerbose verbosity ("abc-build"</>"libabc.dll") (static_dir</>"abc.dll")
 
 -- Make sure the ABC libraries are installed in the appropriate places
 postInstAbc :: Args -> InstallFlags -> PackageDescription -> LocalBuildInfo -> IO ()
