@@ -1,5 +1,5 @@
 Name:               abcBridge
-Version:            0.10.9.9
+Version:            0.11-dev
 Synopsis:           Bindings for ABC, A System for Sequential
                     Synthesis and Verification
 Description:        Bindings for ABC focused on creating And-Inverter
@@ -18,7 +18,6 @@ extra-source-files:
   include/*.h
   cbits/*.c
   scripts/*.sh
-  scripts/*.txt
   tests/eijk.S298.S.aig
 
 flag enable-pthreads
