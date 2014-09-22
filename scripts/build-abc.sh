@@ -24,7 +24,7 @@ REMOVE_ARGS="-R .drectve \
 
 # Select architecture-dependent compiler flags
 case "$ARCH" in
-  "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4" ;;
+  "I386") A="-m32 -fPIC -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4" ;;
   "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4" ;;
   *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
 esac
