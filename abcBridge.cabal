@@ -60,7 +60,7 @@ library
                         FlexibleContexts,
                         MultiParamTypeClasses,
                         EmptyDataDecls
-  Ghc-options:          -Wall -fno-ignore-asserts -fPIC -fasm
+  Ghc-options:          -Wall -fno-ignore-asserts
   Ghc-prof-options:     -auto-all -caf-all
   -- -U__BLOCKS__ to work around https://github.com/haskell/c2hs/issues/29
   Cc-options:           -U__BLOCKS__ -U__has_attribute -w
@@ -107,8 +107,8 @@ test-suite abc-test
   type: exitcode-stdio-1.0
   hs-source-dirs: tests
 
-  ghc-options: -Wall -fPIC -fasm
-  ghc-prof-options: -fprof-auto -O2
+  ghc-options: -Wall
+  ghc-prof-options: -fprof-auto
 
   if flag(enable-hpc)
     ghc-options: -fhpc
@@ -141,8 +141,8 @@ test-suite abc-test
 Executable long-test
   hs-source-dirs: tests
 
-  ghc-options: -Wall -fPIC -fasm
-  ghc-prof-options: -fprof-auto -O2
+  ghc-options: -Wall
+  ghc-prof-options: -fprof-auto
 
   if flag(enable-hpc)
     ghc-options: -fhpc
