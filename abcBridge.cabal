@@ -161,7 +161,7 @@ Executable find-segfault
     vector,
     random,
     tf-random,
-    unix,
+    unix >= 2.7,
     tasty,
     tasty-hunit,
     tasty-quickcheck,
