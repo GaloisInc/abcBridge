@@ -20,6 +20,10 @@ extra-source-files:
   scripts/*.sh
   tests/eijk.S298.S.aig
 
+flag enable-extra-tests
+  Description: Enable building the long-test and find-segfault utility progams
+  Default: False
+
 flag enable-pthreads
   Description: Turn on multithreading
   Default: True
@@ -84,7 +88,7 @@ library
   }
   Include-dirs:         include
 
-  
+
   Build-depends:
     base >= 4,
     aig,
@@ -134,12 +138,41 @@ test-suite abc-test
     tasty,
     tasty-ant-xml,
     tasty-hunit,
+    tasty-quickcheck >= 0.8.1,
+    QuickCheck >= 2.7
+
+
+Executable find-segfault
+  hs-source-dirs: tests
+  ghc-options: -Wall
+
+  if !flag(enable-extra-tests)
+     buildable: False
+
+  default-Language: Haskell2010
+
+  main-is:
+    find-segfault.hs
+  build-depends:
+    base == 4.*,
+    abcBridge,
+    aig,
+    directory,
+    vector,
+    random,
+    tf-random,
+    unix,
+    tasty,
+    tasty-hunit,
     tasty-quickcheck,
     QuickCheck >= 2.7
 
 
 Executable long-test
   hs-source-dirs: tests
+
+  if !flag(enable-extra-tests)
+     buildable: False
 
   ghc-options: -Wall
   ghc-prof-options: -fprof-auto
