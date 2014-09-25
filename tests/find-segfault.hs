@@ -34,17 +34,25 @@ the error so we can run it in a repeatable way.
 
 main :: IO ()
 main = do
-  [strSize, strNum] <- getArgs
-  let testsize = read strSize
-  let numtests = read strNum
-  gen <- initTFGen
-  searchForSegfault gen testsize numtests
+  args <- getArgs
+  case args of
+    [strSize, strNum] -> do
+       let testsize = read strSize
+       let numtests = read strNum
+       gen <- initTFGen
+       searchForSegfault gen testsize numtests
+    [strSize, strNum, strSeed] -> do
+       let testsize = read strSize
+       let numtests = read strNum
+       let seed = read strSeed
+       withArgs [] (runTests seed testsize numtests)
+    _ -> error "incorrect arguments"
 
 searchForSegfault :: TFGen -> Int -> Int -> IO ()
 searchForSegfault gen testsize numtests = do
   let (seed,gen') = next gen
   putStrLn $ unwords ["Running test with seed: ", show seed, "and size:", show testsize,"and number",show numtests]
-  pid <- forkProcess (withArgs [] (runTests seed testsize numtests))
+  pid <- forkProcess (forkTests seed testsize numtests)
   putStrLn $ unwords ["child forked", show pid]
   st <- getProcessStatus True False pid
   print st
@@ -58,11 +66,14 @@ searchForSegfault gen testsize numtests = do
      Just (Stopped sig) -> do
            putStrLn $ unwords ["Stopped by signal:", show sig]
 
-runTests :: Int -> Int -> Int -> IO ()
-runTests seed sz num = do
+forkTests :: Int -> Int -> Int -> IO ()
+forkTests seed sz num = do
   fd <- openFd "child.output" WriteOnly (Just stdFileMode) defaultFileFlags{ trunc = True }
   _ <- dupTo fd stdOutput
+  withArgs [] (runTests seed sz num)
 
+runTests :: Int -> Int -> Int -> IO ()
+runTests seed sz num = do
   ABC.initialize
   putStrLn $ unwords ["running tests in child process..."]
   defaultMainWithIngredients ingrs

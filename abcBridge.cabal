@@ -153,6 +153,8 @@ Executable find-segfault
 
   if !flag(enable-extra-tests)
      buildable: False
+  else
+     buildable: True
      build-depends:
        base == 4.*,
        abcBridge,
