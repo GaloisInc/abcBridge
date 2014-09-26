@@ -327,7 +327,7 @@ instance AIG.IsAIG Lit AIG where
           r1 <- evaluateFn v . Lit =<< abcObjLit1 o
           VM.write v i (r0 && r1)
       -- Return evaluation function.
-      pureEvaluateFn <$> V.freeze v
+      pureEvaluateFn g <$> V.freeze v
 
 forI_ :: Monad m => Int -> (Int -> m ()) -> m ()
 forI_ = go 0
@@ -335,8 +335,8 @@ forI_ = go 0
                  | otherwise = return ()
 
 {-# NOINLINE pureEvaluateFn #-}
-pureEvaluateFn :: V.Vector Bool -> Lit s -> Bool
-pureEvaluateFn v (Lit l) = Unsafe.unsafePerformIO $ do
+pureEvaluateFn :: AIG s -> V.Vector Bool -> Lit s -> Bool
+pureEvaluateFn g v (Lit l) = Unsafe.unsafePerformIO $ withAIGPtr g $ \_ -> do
   let c = abcObjIsComplement l
   let o = abcObjRegular l
   i <- fromIntegral <$> abcObjId o
