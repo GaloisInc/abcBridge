@@ -184,9 +184,10 @@ instance AIG.IsAIG Lit GIA where
     giaNetworkAsAIGMan (AIG.Network ntk [l]) $ \pMan -> do
     -- Allocate a pointer to an ABC network.
     alloca $ \pp -> do
-      flip finally (abcNtkDelete =<< peek pp) $ do
-        poke pp =<< abcNtkFromAigPhase pMan
-        AIG.checkSat' pp
+      bracket_
+        (poke pp =<< abcNtkFromAigPhase pMan)
+        (abcNtkDelete =<< peek pp)
+        (AIG.checkSat' pp)
 
   cec gx gy = do
     withNetworkPtr gx $ \x -> do
@@ -263,7 +264,6 @@ withNetworkPtr = withNetworkPtr_Munge
 --withNetworkPtr = withNetworkPtr_Copy
 
 
-
 -- This is a safer method for implementing withNetworkPtr; it copies the
 -- entire graph before adding the required COs and disposes of the copied
 -- graph afterwards.  Obviously, this has substantial memory usage implications.
@@ -316,13 +316,13 @@ withNetworkPtr_Munge (AIG.Network ntk out) m = do
           writeAt giaManNObjs p orig_oc
 
     -- Run computation, then reset.
-    flip finally reset $ do
+    bracket_
       -- Add combinational outputs.
-      mapM_ (\(L o) -> giaManAppendCo p o) out
-
+      (mapM_ (\(L o) -> giaManAppendCo p o) out)
+      -- reset the graph afterwards
+      reset
       -- Run computation.
-      m p
-
+      (m p)
 
 -- | Run a computation with an AIG man created from a GIA netowrk.
 giaNetworkAsAIGMan :: AIG.Network Lit GIA

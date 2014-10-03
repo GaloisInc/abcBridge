@@ -272,11 +272,12 @@ instance AIG.IsAIG Lit AIG where
       ioWriteAiger p path True False False
 
   checkSat g l = do
-    withNetworkPtr (AIG.Network g [l]) $ \p -> do
-      alloca $ \pp -> do
-        poke pp =<< abcNtkDup p
-        flip finally (abcNtkDelete =<< peek pp) $ do
-        checkSat' pp
+    withNetworkPtr (AIG.Network g [l]) $ \p ->
+      alloca $ \pp ->
+        bracket_
+          (poke pp =<< abcNtkDup p)
+          (abcNtkDelete =<< peek pp)
+          (checkSat' pp)
 
   abstractEvaluateAIG = memoFoldAIG
 
@@ -288,9 +289,10 @@ instance AIG.IsAIG Lit AIG where
     withNetworkPtr x $ \xp -> do
     withNetworkPtr y $ \yp -> do
       alloca $ \pp -> do
-        flip finally (abcNtkDelete =<< peek pp) $ do
-          poke pp =<< abcNtkMiter xp yp False 0 False False
-          AIG.toVerifyResult <$> checkSat' pp
+        bracket_
+          (poke pp =<< abcNtkMiter xp yp False 0 False False)
+          (abcNtkDelete =<< peek pp)
+          (AIG.toVerifyResult <$> checkSat' pp)
 
   evaluator g inputs_l = do
     withAIGPtr g $ \ntk -> do
@@ -367,17 +369,16 @@ withNetworkPtr :: AIG.Network Lit AIG
                -> (Abc_Ntk_t -> IO a)
                -> IO a
 withNetworkPtr (AIG.Network x o) m = do
-  withAIGPtr x $ \p -> do
-  flip finally (deletePos p) $ do
-    mapM_ (addPo p) o
-    m p
+  withAIGPtr x $ \p ->
+    bracket_
+      (mapM_ (addPo p) o)
+      (deletePos p)
+      (m p)
 
 addPo :: Abc_Ntk_t -> Lit s -> IO ()
 addPo p (Lit ptr) = do
   po <- abcNtkCreateObj p AbcObjPo
   abcObjAddFanin po ptr
-
-
 
 checkIsConstant :: Abc_Ntk_t -> IO (Maybe Bool)
 checkIsConstant p = do
