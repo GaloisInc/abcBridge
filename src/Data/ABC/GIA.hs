@@ -40,6 +40,7 @@ module Data.ABC.GIA
     , litView
       -- * File IO
     , readAiger
+    , writeAigerWithLatches
     , writeCNF
       -- * QBF
     , check_exists_forall
@@ -93,6 +94,7 @@ enumRange i n | i == n = []
 -- | An and-invertor graph network in GIA form.
 newtype GIA s = GIA { _giaPtr :: ForeignPtr Gia_Man_t_ }
 
+-- | Represent a literal.
 newtype Lit s = L { _unLit :: GiaLit }
   deriving (Eq, Storable, Ord)
 
@@ -119,7 +121,7 @@ readAiger path = do
     fail $ "Data.ABC.GIA.readAiger: file does not exist"
   let skipStrash = False
   bracketOnError (giaAigerRead path skipStrash False) giaManStop $ \p -> do
-    rn <- giaManRegNum p
+    rn <- getGiaManRegNum p
     when (rn /= 0) $ fail "Networks do not yet support latches."
 
     cov <- giaManCos p
@@ -152,6 +154,27 @@ false = L giaManConst0Lit
 instance Tr.Traceable Lit where
   compareLit x y = compare x y
   showLit x = show (unGiaLit (_unLit x))
+
+-- | Write an AIGER file with the given number of latches.
+-- If the number of latches is denoted by "n", then the last n inputs and last n outputs
+-- are treated as the latch input and outputs respectively.  The other inputs and outputs
+-- represent primary inputs and outputs.
+writeAigerWithLatches :: FilePath
+                      -> AIG.Network Lit GIA
+                      -> Int -- ^ Number of latches.
+                      -> IO ()
+writeAigerWithLatches path ntk latchCount =
+  withNetworkPtr ntk $ \p -> do
+    flip finally (setGiaManRegNum p 0) $ do
+      ci_num <- giaManCiNum p
+      let co_num = AIG.networkOutputCount ntk
+      when (latchCount < 0) $ fail "Latch count must be positive."
+      when (fromIntegral latchCount > ci_num) $ do
+        fail "Latch count exceeds number of inputs."
+      when (latchCount > co_num) $ do
+        fail "Latch count exceeds number of outputs."
+      setGiaManRegNum p (fromIntegral latchCount)
+      giaAigerWrite p path False False
 
 instance AIG.IsAIG Lit GIA where
 
@@ -272,7 +295,7 @@ _withNetworkPtr_Copy (AIG.Network ntk out) m = do
   withGIAPtr ntk $ \p -> do
      ncos <- vecIntSize =<< giaManCos p
      assert( ncos == 0 ) $ do
-     bracket (giaManDupNormalize p) giaManStop 
+     bracket (giaManDupNormalize p) giaManStop
          (\p' -> mapM_ (\(L o) -> giaManAppendCo p' o) out >> m p')
 
 
