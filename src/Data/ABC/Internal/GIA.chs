@@ -300,7 +300,6 @@ data Gia_Man_t_
 giaManCexComb :: Gia_Man_t -> IO Abc_Cex_t
 giaManCexComb = {#get Gia_Man_t->pCexComb #}
 
-
 giaManNObjs :: Field Gia_Man_t CInt
 giaManNObjs = fieldFromOffset {#offsetof Gia_Man_t->nObjs #}
 

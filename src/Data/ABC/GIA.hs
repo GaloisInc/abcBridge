@@ -273,6 +273,7 @@ instance AIG.IsAIG Lit GIA where
     -- return the outputs
     pureEvaluateFn <$> V.freeze vec
 
+-- | Evaluate a literal on an assignment.
 pureEvaluateFn :: V.Vector Bool -> Lit s -> Bool
 pureEvaluateFn v (L l) = assert inRange (c /= (v V.! i))
   where i = fromIntegral $ unGiaVar $ giaLitVar l
@@ -326,8 +327,8 @@ withNetworkPtr_Munge (AIG.Network ntk out) m = do
           -- clear the objects for reuse
           forN_ (fromIntegral ncos) $ \i -> do
              var <- vecIntEntry cov (fromIntegral i)
-             -- Assert that all the objects we are clearing are above the old object count; that is,
-             -- they must have been allocated when we shoved in the new COs.
+             -- Assert that all the objects we are clearing are above the old object count;
+             -- that is, they must have been allocated when we shoved in the new COs.
              assert (var >= orig_oc) $ do
              -- clear the memory assocaited with the GIA object
              clearGiaObj =<< giaManObj p (GiaVar var)
