@@ -72,9 +72,9 @@ main = defaultMainWithHooks simpleUserHooks
     , hscolourHook = \pkg_desc lbi h f -> do
                     pkg_desc' <- abcPkgDesc pkg_desc
                     hscolourHook simpleUserHooks pkg_desc' lbi h f
-    , testHook = \pkg_desc lbi h f -> do
+    , testHook = \args pkg_desc lbi h f -> do
                     pkg_desc' <- abcPkgDesc pkg_desc
-                    testHook simpleUserHooks pkg_desc' lbi h f
+                    testHook simpleUserHooks args pkg_desc' lbi h f
 
     , postCopy = postCopyAbc
     , postInst = postInstAbc
