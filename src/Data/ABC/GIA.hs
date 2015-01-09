@@ -382,7 +382,6 @@ litEvaluator fp viewFn = do
         return t
   r <- newIORef Map.empty
   let objTerm o = do
-        --putStrLn $ "objTerm " ++ show o
         m0 <- readIORef r
         case Map.lookup o m0 of
           Just t -> return t
@@ -468,6 +467,7 @@ writeCNF ntk l f = do
       ci <- aigManCi pMan (fromIntegral i)
       ((vars SV.!) . fromIntegral) `fmap` (aigObjId ci)
 
+data PartialSatResult
 -- | Check a formula of the form Ex.Ay p(x,y)@.
 -- This function takes a network where input variables are used to
 -- represent both the existentially and the universally quantified variables.
@@ -483,7 +483,7 @@ check_exists_forall :: GIA s
                     -> [Bool]
                        -- ^ Initial value to use in search for universal variables.
                        -- (should equal number of universal variables.).
-                    -> Int
+                    -> CInt
                        -- ^ Number of iterations to try solver.
                     -> IO (Either String AIG.SatResult)
 check_exists_forall ntk exists_cnt prop init_assign iter_cnt = do

@@ -405,6 +405,6 @@ foreign import ccall unsafe "&Abc_NtkDelete"
 {#fun AbcBridge_NtkQbf as abcNtkQbf
     { id `Abc_Ntk_t' -- Network
     , `Int' -- Number of parameters
-    , `Int' -- Maximum number of iterations.
+    , id `CInt' -- Maximum number of iterations.
     , id `Vec_Int_t' -- Vector for storing result.
     } -> `Int' #}
