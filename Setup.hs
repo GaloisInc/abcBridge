@@ -18,7 +18,7 @@ import Control.Monad(when)
 -- Here we install custom hooks to deal with fetching and building the ABC
 -- sources.  This mostly involves calling into the "scripts/setup-abc.sh"
 -- and "scripts/build-abc.sh" scripts at the proper times.
--- 
+--
 -- The other thing we must do is automagically munge the cabal description
 -- to handle the ABC source tree.  We do this by editing, at runtime, the
 -- cabal package description to include the ABC sources files to `extra-source-files`
@@ -72,9 +72,9 @@ main = defaultMainWithHooks simpleUserHooks
     , hscolourHook = \pkg_desc lbi h f -> do
                     pkg_desc' <- abcPkgDesc pkg_desc
                     hscolourHook simpleUserHooks pkg_desc' lbi h f
-    , testHook = \args pkg_desc lbi h f -> do
+    , testHook = \pkg_desc lbi h f -> do
                     pkg_desc' <- abcPkgDesc pkg_desc
-                    testHook simpleUserHooks args pkg_desc' lbi h f
+                    testHook simpleUserHooks pkg_desc' lbi h f
 
     , postCopy = postCopyAbc
     , postInst = postInstAbc
@@ -91,12 +91,12 @@ abcPkgDesc pkg_desc = do
   abcSrcFiles <- fmap lines $ readFile $ "abc-build" </> "abc-sources.txt"
   abcInclDirs <- fmap lines $ readFile $ "abc-build" </> "abc-incl-dirs.txt"
   let pg' = updatePackageDescription (libDirAbc cwd abcInclDirs) pkg_desc
-  return pg'{ extraSrcFiles = extraSrcFiles pg' ++ abcSrcFiles 
+  return pg'{ extraSrcFiles = extraSrcFiles pg' ++ abcSrcFiles
             }
 
 libDirAbc :: FilePath -> [FilePath] -> HookedBuildInfo
 libDirAbc cwd abcInclDirs = (Just buildinfo, [])
-    where buildinfo = emptyBuildInfo 
+    where buildinfo = emptyBuildInfo
                       { includeDirs = abcInclDirs
                       , extraLibDirs = [cwd </> static_dir]
                       }
