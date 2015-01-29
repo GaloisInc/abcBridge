@@ -9,6 +9,7 @@ import Distribution.PackageDescription (PackageDescription(..), GenericPackageDe
         updatePackageDescription, FlagAssignment(..), FlagName(..))
 import Distribution.Verbosity (verbose, Verbosity(..))
 import Distribution.System (OS(..), Arch(..), Platform (..), buildOS, buildPlatform)
+import qualified Distribution.Simple.Utils
 import Data.Version( Version, showVersion )
 import System.Directory
 import System.FilePath
@@ -29,52 +30,28 @@ import Control.Monad(when)
 -- Finally, we must also include some information about where do find the libabc.a
 -- and libabc.dll files.
 --
--- The way we have to do this is sort of nasty, but implementing the "readDesc" user
--- hook doesn't seem to work the way I expect, so we have to modify the package description
--- "in flight" inside each of the various hooks.
+-- We do this by modifying the configure hook so it modifies the package description
+-- read from disk before returing the local build info that is used by other cabal actions.
+-- However, we also have to modify the sDistHook because it reads from the package description
+-- file directly rather than using the one from the confHook.  The 'clean' action likewise reads
+-- the description file directly, but it causes no problems to use the unmodified package
+-- description for the clean action, so we do not modify that hook.
 
 main = defaultMainWithHooks simpleUserHooks
-    { postConf = \a f pkg_desc lbi -> do
-                    pkg_desc' <- abcPkgDesc pkg_desc
-                    postConf simpleUserHooks a f pkg_desc' lbi
-
-    ,  confHook = \(gpkg_desc, hbi) f -> do
+    {  confHook = \(gpkg_desc, hbi) f -> do
                     let v = fromFlag $ configVerbosity f
                     let fs = configConfigurationsFlags f
                     setupAbc v (packageDescription gpkg_desc)
                     buildAbc v fs
-                    confHook simpleUserHooks (gpkg_desc, hbi) f
+                    lbi <- confHook simpleUserHooks (gpkg_desc, hbi) f
+                    pkg_desc' <- abcPkgDesc (localPkgDescr lbi)
+                    return lbi{ localPkgDescr = pkg_desc' }
 
     , sDistHook = \pkg_desc lbi h f -> do
                     let v = fromFlag $ sDistVerbosity f
                     setupAbc v pkg_desc
                     pkg_desc' <- abcPkgDesc pkg_desc
                     sDistHook simpleUserHooks pkg_desc' lbi h f
-
-    , buildHook = \pkg_desc lbi h f -> do
-                    pkg_desc' <- abcPkgDesc pkg_desc
-                    buildHook simpleUserHooks pkg_desc' lbi h f
-    , haddockHook = \pkg_desc lbi h f -> do
-                    pkg_desc' <- abcPkgDesc pkg_desc
-                    haddockHook simpleUserHooks pkg_desc' lbi h f
-    , copyHook = \pkg_desc lbi h f -> do
-                    pkg_desc' <- abcPkgDesc pkg_desc
-                    copyHook simpleUserHooks pkg_desc' lbi h f
-    , instHook = \pkg_desc lbi h f -> do
-                    pkg_desc' <- abcPkgDesc pkg_desc
-                    instHook simpleUserHooks pkg_desc' lbi h f
-    , regHook = \pkg_desc lbi h f -> do
-                    pkg_desc' <- abcPkgDesc pkg_desc
-                    regHook simpleUserHooks pkg_desc' lbi h f
-    , unregHook = \pkg_desc lbi h f -> do
-                    pkg_desc' <- abcPkgDesc pkg_desc
-                    unregHook simpleUserHooks pkg_desc' lbi h f
-    , hscolourHook = \pkg_desc lbi h f -> do
-                    pkg_desc' <- abcPkgDesc pkg_desc
-                    hscolourHook simpleUserHooks pkg_desc' lbi h f
-    , testHook = \args pkg_desc lbi h f -> do
-                    pkg_desc' <- abcPkgDesc pkg_desc
-                    testHook simpleUserHooks args pkg_desc' lbi h f
 
     , postCopy = postCopyAbc
     , postInst = postInstAbc
@@ -109,6 +86,7 @@ onWindows act = case buildPlatform of
 -- If necessary, fetch the ABC sources and prepare for building
 setupAbc :: Verbosity -> PackageDescription -> IO ()
 setupAbc verbosity pkg_desc = do
+    putStrLn $ unwords ["Cabal library version:", showVersion Distribution.Simple.Utils.cabalVersion]
     let version = pkgVersion $ package $ pkg_desc
     let packageVersion = "PACKAGE_VERSION"
     env <- getEnvironment

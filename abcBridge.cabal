@@ -12,7 +12,7 @@ Maintainer:         jhendrix@galois.com
 Copyright:          (c) 2010-2014 Galois Inc.
 Category:           Data
 build-type:         Custom
-cabal-Version:      >= 1.22
+cabal-Version:      >= 1.18
 
 extra-source-files:
   include/*.h
