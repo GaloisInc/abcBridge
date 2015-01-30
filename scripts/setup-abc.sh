@@ -28,7 +28,10 @@ else
   ABC_VERSION="NONE"
 fi
 
-if [[ "$PACKAGE_VERSION" != "" && "$ABC_VERSION" != "$PACKAGE_VERSION" ]]; then
+# Skip PACKAGE_VERSION check if it is not defined.
+PACKAGE_VERSION=${PACKAGE_VERSION:-"$ABC_VERSION"}
+
+if [[ "$ABC_VERSION" != "$PACKAGE_VERSION" ]]; then
   echo ""
   echo "The ABC source version $ABC_VERSION does not match the abcBridge package version version $PACKAGE_VERSION."
   echo ""
