@@ -6,8 +6,8 @@ set -e
 ARCH="$1"
 OS="$2"
 
-SRC_TARBALL="https://bitbucket.org/rdockins/abc/get/galois-abcBridge.tar.bz2"
-LOCAL_TARBALL="galois-abcBridge.tar.bz2"
+LOCAL_TARBALL="galois-abcBridge-${PACKAGE_VERSION}.tar.bz2"
+SRC_TARBALL="https://bitbucket.org/rdockins/abc/get/${LOCAL_TARBALL}"
 
 echo "Setting up ABC tree for abcBridge version ${PACKAGE_VERSION}..."
 

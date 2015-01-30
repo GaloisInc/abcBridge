@@ -8,7 +8,7 @@ Description:        Bindings for ABC focused on creating And-Inverter
 License:            BSD3
 License-file:       LICENSE
 Author:             Galois Inc.
-Maintainer:         jhendrix@galois.com
+Maintainer:         jhendrix@galois.com, rdockins@galois.com
 Copyright:          (c) 2010-2015 Galois Inc.
 Category:           Data
 build-type:         Custom
