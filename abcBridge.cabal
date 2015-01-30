@@ -1,5 +1,5 @@
 Name:               abcBridge
-Version:            0.11
+Version:            0.12
 Synopsis:           Bindings for ABC, A System for Sequential
                     Synthesis and Verification
 Description:        Bindings for ABC focused on creating And-Inverter
@@ -9,7 +9,7 @@ License:            BSD3
 License-file:       LICENSE
 Author:             Galois Inc.
 Maintainer:         jhendrix@galois.com
-Copyright:          (c) 2010-2014 Galois Inc.
+Copyright:          (c) 2010-2015 Galois Inc.
 Category:           Data
 build-type:         Custom
 cabal-Version:      >= 1.18
@@ -27,11 +27,6 @@ flag enable-extra-tests
 flag enable-pthreads
   Description: Turn on multithreading
   Default: True
-
--- Ugh. Temporary fix to make Hackage happy.
---flag enable-hpc
---  Description: Collect HPC coverage information.
---  Default: False
 
 source-repository head
   type: git
@@ -104,11 +99,6 @@ library
                         cbits/abcBridgeGiaDup.c
                         cbits/pthread_stubs.c
 
-  -- Ugh. Temporary fix to make Hackage happy.
-  --if flag(enable-hpc)
-  --  ghc-options: -fhpc -hpcdir .hpc
-
-
 test-suite abc-test
   type: exitcode-stdio-1.0
   hs-source-dirs: tests
@@ -116,15 +106,7 @@ test-suite abc-test
   ghc-options: -Wall
   ghc-prof-options: -fprof-auto
 
-  -- Ugh. Temporary fix to make Hackage happy.
-  --if flag(enable-hpc)
-  --  ghc-options: -fhpc
-
   default-Language: Haskell98
-
-  -- Ugh. Temporary fix to make Hackage happy.
-  --if flag(enable-hpc)
-  --  ghc-options: -fhpc
 
   other-modules:
     Tests.Basic
@@ -184,15 +166,10 @@ Executable long-test
   ghc-options: -Wall
   ghc-prof-options: -fprof-auto
 
-  -- Ugh. Temporary fix to make Hackage happy.
-  --if flag(enable-hpc)
-  --  ghc-options: -fhpc
-
   default-Language: Haskell98
 
   main-is:
     long-test.hs
   build-depends:
     base == 4.*,
-
     abcBridge
