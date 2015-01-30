@@ -61,7 +61,7 @@ library
                         MultiParamTypeClasses,
                         EmptyDataDecls
   Ghc-options:          -Wall -fno-ignore-asserts
-  Ghc-prof-options:     -auto-all -caf-all
+  -- Ghc-prof-options:     -auto-all -caf-all
   -- -U__BLOCKS__ to work around https://github.com/haskell/c2hs/issues/29
   Cc-options:           -U__BLOCKS__ -U__has_attribute -w
 
@@ -104,7 +104,7 @@ test-suite abc-test
   hs-source-dirs: tests
 
   ghc-options: -Wall
-  ghc-prof-options: -fprof-auto
+  -- ghc-prof-options: -fprof-auto
 
   default-Language: Haskell98
 
@@ -164,7 +164,7 @@ Executable long-test
      buildable: False
 
   ghc-options: -Wall
-  ghc-prof-options: -fprof-auto
+  -- ghc-prof-options: -fprof-auto
 
   default-Language: Haskell98
 
