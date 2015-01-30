@@ -28,6 +28,7 @@ module Data.ABC.Internal.ABCGlobal (
 #include "abc_global.h"
 #include "abcbridge.h"
 
+import Data.Word
 import Control.Applicative
 import Control.Exception (assert)
 import Foreign
@@ -77,14 +78,17 @@ peekAbcCex p = do
     nRegs   <- fromIntegral <$> {#get Abc_Cex_t->nRegs #} p
     nPis    <- fromIntegral <$> {#get Abc_Cex_t->nPis #} p
     nBits   <- fromIntegral <$> {#get Abc_Cex_t->nBits #} p
+
+    let size = 32 -- this is what the assume in the code!
+
     -- read out the data (it's a big bit field, so we'll
     -- convert it into a flat [Bool] before slicing and dicing);
     -- there might be a little extra left over
-    ws <- peekArray (nBits `divUp` (sizeOf (undefined :: CUInt)))
-                    (castPtr (plusPtr p {#sizeof Abc_Cex_t#}) :: Ptr CUInt)
-                    :: IO [CUInt]
-    let size = 32 -- this is what the assume in the code!
-        bits = concatMap (\x -> map (testBit x) [0..size-1]) ws :: [Bool]
+    ws <- peekArray (nBits `divUp` size)
+                    (castPtr (plusPtr p {#sizeof Abc_Cex_t#}) :: Ptr Word32)
+                    :: IO [Word32]
+
+    let bits = concatMap (\x -> map (testBit x) [0..size-1]) ws :: [Bool]
         -- slice it up
         (regs, flatInputs) = splitAt nRegs bits
         inputs = chunksOf nPis ((take ((iFrame + 1) * nPis)) flatInputs)

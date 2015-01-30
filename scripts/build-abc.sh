@@ -44,4 +44,3 @@ fi
 
 cd abc-build
 make -j4 ARCHFLAGS="-DABC_LIB $A" REMOVE_DRECTVE="$REMOVE_CMD" READLINE=0 PTHREADS="$PTHREADS" libabc.a $S
-

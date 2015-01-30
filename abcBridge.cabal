@@ -12,13 +12,17 @@ Maintainer:         jhendrix@galois.com
 Copyright:          (c) 2010-2014 Galois Inc.
 Category:           Data
 build-type:         Custom
-cabal-Version:      >= 1.10
+cabal-Version:      >= 1.18
 
 extra-source-files:
   include/*.h
   cbits/*.c
   scripts/*.sh
   tests/eijk.S298.S.aig
+
+flag enable-extra-tests
+  Description: Enable building the long-test and find-segfault utility progams
+  Default: False
 
 flag enable-pthreads
   Description: Turn on multithreading
@@ -61,7 +65,8 @@ library
                         FlexibleContexts,
                         MultiParamTypeClasses,
                         EmptyDataDecls
-  Ghc-options:          -Wall  -auto-all -caf-all -fno-ignore-asserts
+  Ghc-options:          -Wall -fno-ignore-asserts
+  Ghc-prof-options:     -auto-all -caf-all
   -- -U__BLOCKS__ to work around https://github.com/haskell/c2hs/issues/29
   Cc-options:           -U__BLOCKS__ -U__has_attribute -w
 
@@ -84,10 +89,10 @@ library
   }
   Include-dirs:         include
 
-  
+
   Build-depends:
     base >= 4,
-    aig,
+    aig >= 0.2.1,
     containers,
     directory,
     vector
@@ -109,7 +114,7 @@ test-suite abc-test
   hs-source-dirs: tests
 
   ghc-options: -Wall
-  ghc-prof-options: -fprof-auto -O2
+  ghc-prof-options: -fprof-auto
 
   -- Ugh. Temporary fix to make Hackage happy.
   --if flag(enable-hpc)
@@ -137,15 +142,47 @@ test-suite abc-test
     tasty,
     tasty-ant-xml,
     tasty-hunit,
-    tasty-quickcheck,
+    tasty-quickcheck >= 0.8.1,
     QuickCheck >= 2.7
+
+
+Executable find-segfault
+  hs-source-dirs: tests
+  ghc-options: -Wall
+
+  default-Language: Haskell2010
+
+  main-is:
+    find-segfault.hs
+
+  if !flag(enable-extra-tests)
+     buildable: False
+  else
+     buildable: True
+     build-depends:
+       base == 4.*,
+       abcBridge,
+       aig,
+       directory,
+       vector,
+       random,
+       tf-random,
+       unix >= 2.7,
+       tasty,
+       tasty-hunit,
+       tasty-quickcheck,
+       QuickCheck >= 2.7
+
 
 
 Executable long-test
   hs-source-dirs: tests
 
+  if !flag(enable-extra-tests)
+     buildable: False
+
   ghc-options: -Wall
-  ghc-prof-options: -fprof-auto -O2
+  ghc-prof-options: -fprof-auto
 
   -- Ugh. Temporary fix to make Hackage happy.
   --if flag(enable-hpc)
@@ -157,4 +194,5 @@ Executable long-test
     long-test.hs
   build-depends:
     base == 4.*,
+
     abcBridge

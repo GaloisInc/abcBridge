@@ -51,7 +51,8 @@ module Data.ABC.Internal.GIA (
     , giaManPiNum
     , giaManPoNum
     , giaManAndNum
-    , giaManRegNum
+    , getGiaManRegNum
+    , setGiaManRegNum
 
     , giaManCiVar
     , giaManCoVar
@@ -299,7 +300,6 @@ data Gia_Man_t_
 giaManCexComb :: Gia_Man_t -> IO Abc_Cex_t
 giaManCexComb = {#get Gia_Man_t->pCexComb #}
 
-
 giaManNObjs :: Field Gia_Man_t CInt
 giaManNObjs = fieldFromOffset {#offsetof Gia_Man_t->nObjs #}
 
@@ -327,14 +327,17 @@ giaManCiNum = vecIntSize <=< giaManCis
 giaManCoNum :: Gia_Man_t -> IO CInt
 giaManCoNum = vecIntSize <=< giaManCos
 
-giaManRegNum :: Gia_Man_t -> IO CInt
-giaManRegNum = {#get Gia_Man_t->nRegs #}
+getGiaManRegNum :: Gia_Man_t -> IO CInt
+getGiaManRegNum = {#get Gia_Man_t->nRegs #}
+
+setGiaManRegNum :: Gia_Man_t -> CInt -> IO ()
+setGiaManRegNum = {#set Gia_Man_t->nRegs #}
 
 giaManPiNum :: Gia_Man_t -> IO CInt
-giaManPiNum m = (-) <$> giaManCiNum m <*> giaManRegNum m
+giaManPiNum m = (-) <$> giaManCiNum m <*> getGiaManRegNum m
 
 giaManPoNum :: Gia_Man_t -> IO CInt
-giaManPoNum m = (-) <$> giaManCoNum m <*> giaManRegNum m
+giaManPoNum m = (-) <$> giaManCoNum m <*> getGiaManRegNum m
 
 giaManAndNum :: Gia_Man_t -> IO CInt
 giaManAndNum m = fn <$> giaManObjNum m <*> giaManCiNum m <*> giaManCoNum m
