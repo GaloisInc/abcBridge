@@ -3,9 +3,6 @@
 # bail out immediately if any command fails
 set -e
 
-ARCH="$1"
-OS="$2"
-
 SRC_TARBALL="https://bitbucket.org/rdockins/abc/get/galois-abcBridge.tar.bz2"
 LOCAL_TARBALL="galois-abcBridge.tar.bz2"
 
@@ -31,9 +28,9 @@ else
   ABC_VERSION="NONE"
 fi
 
-if [ $ABC_VERSION != $PACKAGE_VERSION ]; then
+if [[ "$PACKAGE_VERSION" != "" && "$ABC_VERSION" != "$PACKAGE_VERSION" ]]; then
   echo ""
-  echo "The ABC source version ${ABC_VERSION} does not match the abcBridge package version version ${PACKAGE_VERSION}."
+  echo "The ABC source version $ABC_VERSION does not match the abcBridge package version version $PACKAGE_VERSION."
   echo ""
   echo "This may cause problems with the build; it is recommended you cancel this build and check out matching ABC sources"
   echo "into the abc-build directory and try again.  You can run scripts/clean_abc.sh to remove the current ABC sources;"
