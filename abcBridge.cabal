@@ -1,5 +1,5 @@
 Name:               abcBridge
-Version:            0.11-dev
+Version:            0.13-dev
 Synopsis:           Bindings for ABC, A System for Sequential
                     Synthesis and Verification
 Description:        Bindings for ABC focused on creating And-Inverter
@@ -9,7 +9,7 @@ License:            BSD3
 License-file:       LICENSE
 Author:             Galois Inc.
 Maintainer:         jhendrix@galois.com
-Copyright:          (c) 2010-2014 Galois Inc.
+Copyright:          (c) 2010-2015 Galois Inc.
 Category:           Data
 build-type:         Custom
 cabal-Version:      >= 1.18
@@ -91,7 +91,7 @@ library
 
   Build-depends:
     base >= 4,
-    aig >= 0.2.1,
+    aig >= 0.2.2,
     containers,
     directory,
     vector
