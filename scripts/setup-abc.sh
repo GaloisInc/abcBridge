@@ -6,7 +6,7 @@ set -e
 SRC_TARBALL="https://bitbucket.org/rdockins/abc/get/galois-abcBridge.tar.bz2"
 LOCAL_TARBALL="galois-abcBridge.tar.bz2"
 
-echo "Setting up ABC tree for abcBridge version ${PACKAGE_VERSION}..."
+echo "Setting up ABC tree for abcBridge version ${PACKAGE_VERSION:-undefined}..."
 
 # If the ABC source is not already fetched, download the galois-abcBridge
 # branch of the ABC project and unpack it in the "abc-build" subdirectory
