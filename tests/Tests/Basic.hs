@@ -9,7 +9,7 @@ import System.Directory
 import System.IO
 
 import Test.Tasty
-import Test.Tasty.HUnit
+import Test.Tasty.HUnit as HU
 import Test.Tasty.QuickCheck
 import Test.QuickCheck
 
@@ -130,6 +130,16 @@ basic_tests proxy@(ABC.Proxy f) = f $
        ABC.Sat{} -> fail "falseLit is sat"
        ABC.Unsat{} -> return ()
        ABC.SatUnknown{} -> fail "falseLit is unknown"
+
+     i1 <- ABC.newInput g
+     i2 <- ABC.newInput g
+     o  <- ABC.and g i1 (ABC.not i2)
+     rand <- ABC.checkSat g o
+     case rand of
+       ABC.Sat [x,y] -> HU.assert (x && not y)
+       ABC.Sat _ -> fail "and predicate returned nonsense model"
+       ABC.Unsat -> fail "and predicate is unsat"
+       ABC.SatUnknown -> fail "and predicate is unknown"
 
   , testCase "aiger_twice" $ do
       ABC.SomeGraph g <- ABC.newGraph proxy
