@@ -5,8 +5,8 @@ set -e
 
 echo "Setting up ABC tree for abcBridge version ${PACKAGE_VERSION:-undefined}..."
 
-if [[ -z "${PACKAGE_VERSION}" ]]; then
-  if [[ -d abc-build ]]; then
+if [ -z "${PACKAGE_VERSION}" ]; then
+  if [ -d abc-build ]; then
     echo ""
     echo "Package version not defined; assuming compatible ABC sources are already present in directory abc-build"
   else
@@ -42,7 +42,7 @@ else
 
   PACKAGE_VERSION=${PACKAGE_VERSION:-"$ABC_VERSION"}
 
-  if [[ "$ABC_VERSION" != "$PACKAGE_VERSION" ]]; then
+  if [ "$ABC_VERSION" != "$PACKAGE_VERSION" ]; then
     echo ""
     echo "The ABC source version $ABC_VERSION does not match the abcBridge package version $PACKAGE_VERSION."
     echo ""
