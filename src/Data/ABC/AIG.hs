@@ -171,7 +171,13 @@ checkSat' pp = do
     Just True -> return (AIG.Sat (replicate ic False))
     Just False  -> return AIG.Unsat
     Nothing -> do
-      let params = proveParamsDefault { nItersMax'Prove_Params = 5 }
+      let params = proveParamsDefault
+                   { nItersMax'Prove_Params = 5
+                   -- Using rewriting seems to trigger a bug in some cases,
+                   -- so here we diable it.  It also seems to be faster on
+                   -- some examples to disable?
+                   , fUseRewriting'Prove_Params = False
+                   }
       with params $ \pParams -> do
         r <- abcNtkIvyProve pp (castPtr pParams)
         case r of
