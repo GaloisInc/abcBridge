@@ -204,16 +204,13 @@ instance AIG.IsAIG Lit GIA where
       giaAigerWrite p path False False
 
   checkSat ntk l = do
-    withGIAPtr ntk $ \ntk_p -> do
-    input_count <- giaManCiNum ntk_p
-    bracket (giaManStart 4096) giaManStop $ \p -> do
-      mapM_ (\_ -> giaManAppendCi p) [1 .. input_count]
-      p' <- newForeignPtr_ p
-      r <- AIG.cec (AIG.Network ntk [l]) (AIG.Network (GIA p') [false])
-      return $! case r of
-        AIG.Valid -> AIG.Unsat
-        AIG.Invalid bs -> AIG.Sat bs
-        AIG.VerifyUnknown -> AIG.SatUnknown
+    giaNetworkAsAIGMan (AIG.Network ntk [l]) $ \pMan -> do
+    -- Allocate a pointer to an ABC network.
+    alloca $ \pp -> do
+      bracket_
+        (poke pp =<< abcNtkFromAigPhase pMan)
+        (abcNtkDelete =<< peek pp)
+        (AIG.checkSat' pp)
 
   cec gx gy = do
     withNetworkPtr gx $ \x -> do
@@ -238,7 +235,7 @@ instance AIG.IsAIG Lit GIA where
         cex <- peekAbcCex pCex
         let r2 = pData'inputs'Abc_Cex cex
         case r2 of
-          []   -> return (AIG.Invalid [])
+          [] -> error "cec: Generated counter-example had no inputs"
           [bs] -> return (AIG.Invalid bs)
           _ -> error "cec: Generated counter example has too many frames"
       -1 -> fail "cec: failed"

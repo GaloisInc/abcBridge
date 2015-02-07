@@ -41,7 +41,7 @@ divUp a b = let (d,r) = divMod a b
 -- | @chunksOf n l@ partitions l into length @n@ chunks.  The last chunk
 -- may contain fewer than @n@ elements.
 chunksOf :: Int -> [e] -> [[e]]
-chunksOf n = go
+chunksOf n = assert (n > 0) go
   where go [] = []
         go l = h : go r
           where (h,r) = splitAt n l
