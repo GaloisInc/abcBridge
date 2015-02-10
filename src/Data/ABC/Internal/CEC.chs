@@ -99,6 +99,7 @@ data Cec_ParCec_t_ = Cec_ParCec_t_
     , nTimeLimit'Cec_ParCec :: Int    -- ^ the runtime limit in seconds (added prefix @n@)
     , fUseSmartCnf'Cec_ParCec :: Bool -- ^ use smart CNF computation
     , fRewriting'Cec_ParCec :: Bool   -- ^ enables AIG rewriting
+    , fNaive'Cec_ParCec :: Bool       -- ^ perform naive SAT-based checking
     , fVeryVerbose'Cec_ParCec :: Bool -- ^ very verbose stats
     , fVerbose'Cec_ParCec :: Bool     -- ^ verbose stats
     , iOutFail'Cec_ParCec :: Int      -- ^ the number of failed output
@@ -112,6 +113,7 @@ instance Storable Cec_ParCec_t_ where
         <*> fmap fromIntegral ({#get Cec_ParCec_t->TimeLimit #} p)
         <*> fmap toBool ({#get Cec_ParCec_t->fUseSmartCnf #} p)
         <*> fmap toBool ({#get Cec_ParCec_t->fRewriting #} p)
+        <*> fmap toBool ({#get Cec_ParCec_t->fNaive #} p)
         <*> fmap toBool ({#get Cec_ParCec_t->fVeryVerbose #} p)
         <*> fmap toBool ({#get Cec_ParCec_t->fVerbose #} p)
         <*> fmap fromIntegral ({#get Cec_ParCec_t->iOutFail #} p)
@@ -120,6 +122,7 @@ instance Storable Cec_ParCec_t_ where
         {#set Cec_ParCec_t.TimeLimit #}     p (fromIntegral $ nTimeLimit'Cec_ParCec x)
         {#set Cec_ParCec_t.fUseSmartCnf #}  p (fromBool $ fUseSmartCnf'Cec_ParCec x)
         {#set Cec_ParCec_t.fRewriting #}    p (fromBool $ fRewriting'Cec_ParCec x)
+        {#set Cec_ParCec_t.fNaive #}        p (fromBool $ fNaive'Cec_ParCec x)
         {#set Cec_ParCec_t.fVeryVerbose #}  p (fromBool $ fVeryVerbose'Cec_ParCec x)
         {#set Cec_ParCec_t.fVerbose #}      p (fromBool $ fVerbose'Cec_ParCec x)
         {#set Cec_ParCec_t.iOutFail #}      p (fromIntegral $ iOutFail'Cec_ParCec x)
