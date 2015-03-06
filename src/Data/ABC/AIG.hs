@@ -32,7 +32,6 @@ module Data.ABC.AIG
   , Lit
   , true
   , false
-  , writeToCNF
   , writeAIGManToCNFWithMapping
   , checkSat'
     -- * Re-exports
@@ -277,6 +276,15 @@ instance AIG.IsAIG Lit AIG where
     withNetworkPtr a $ \p -> do
       ioWriteAiger p path True False False
 
+  writeCNF aig l path =
+    withNetworkPtr (AIG.Network aig [l]) $ \pNtk -> do
+      withAbcNtkToDar pNtk False False $ \pMan -> do
+        vars <- writeAIGManToCNFWithMapping pMan path
+        ciCount <- aigManCiNum pMan
+        forM [0..(ciCount - 1)] $ \i -> do
+          ci <- aigManCi pMan (fromIntegral i)
+          ((vars V.!) . fromIntegral) `fmap` (aigObjId ci)
+
   checkSat g l = do
     withNetworkPtr (AIG.Network g [l]) $ \p ->
       alloca $ \pp ->
@@ -406,18 +414,6 @@ withAbcNtkToDar ntk exors registers h = do
   bracket (abcNtkToDar ntk exors registers)
           aigManStop
           h
-
--- | Write a CNF file to the given path.
--- Returns vector mapping combinational inputs to CNF Variable numbers.
-writeToCNF :: AIG s -> Lit s -> FilePath -> IO [Int]
-writeToCNF aig l path =
-  withNetworkPtr (AIG.Network aig [l]) $ \pNtk -> do
-    withAbcNtkToDar pNtk False False $ \pMan -> do
-      vars <- writeAIGManToCNFWithMapping pMan path
-      ciCount <- aigManCiNum pMan
-      forM [0..(ciCount - 1)] $ \i -> do
-        ci <- aigManCi pMan (fromIntegral i)
-        ((vars V.!) . fromIntegral) `fmap` (aigObjId ci)
 
 -- | Convert the network referred to by an AIG manager into CNF format
 -- and write to a file, returning a mapping from ABC object IDs to CNF

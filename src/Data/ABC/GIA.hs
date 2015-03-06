@@ -41,7 +41,6 @@ module Data.ABC.GIA
       -- * File IO
     , readAiger
     , writeAigerWithLatches
-    , writeCNF
       -- * QBF
     , check_exists_forall
       -- * Re-exports
@@ -202,6 +201,14 @@ instance AIG.IsAIG Lit GIA where
   writeAiger path g = do
     withNetworkPtr g $ \p -> do
       giaAigerWrite p path False False
+
+  writeCNF ntk l f = do
+    giaNetworkAsAIGMan (AIG.Network ntk [l]) $ \pMan -> do
+      vars <- AIG.writeAIGManToCNFWithMapping pMan f
+      ciCount <- aigManCiNum pMan
+      forM [0..(ciCount - 1)] $ \i -> do
+        ci <- aigManCi pMan (fromIntegral i)
+        ((vars SV.!) . fromIntegral) `fmap` (aigObjId ci)
 
   checkSat ntk l = do
     giaNetworkAsAIGMan (AIG.Network ntk [l]) $ \pMan -> do
@@ -455,17 +462,6 @@ getVecIntAsBool v = do
       0 -> return False
       1 -> return True
       _ -> fail $ "getVecAsBool given bad value " ++ show e
-
--- | Write a CNF file to the given path.
---   Returns vector mapping combinational inputs to CNF Variable numbers.
-writeCNF :: GIA s -> Lit s -> FilePath -> IO [Int]
-writeCNF ntk l f = do
-  giaNetworkAsAIGMan (AIG.Network ntk [l]) $ \pMan -> do
-    vars <- AIG.writeAIGManToCNFWithMapping pMan f
-    ciCount <- aigManCiNum pMan
-    forM [0..(ciCount - 1)] $ \i -> do
-      ci <- aigManCi pMan (fromIntegral i)
-      ((vars SV.!) . fromIntegral) `fmap` (aigObjId ci)
 
 data PartialSatResult
 -- | Check a formula of the form Ex.Ay p(x,y)@.
