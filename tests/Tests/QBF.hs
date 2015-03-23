@@ -19,6 +19,7 @@ qbf_tests =
       case r of
         ABC.Sat{} -> fail "abc returned sat"
         ABC.Unsat{} -> return ()
+        ABC.SatUnknown -> fail "abc returned unknown"
   , testCase "test_qbf_or" $ do
       ABC.SomeGraph g <- GIA.newGIA
       i0 <- ABC.newInput g

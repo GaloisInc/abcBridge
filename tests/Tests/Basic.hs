@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternGuards #-}
 module Tests.Basic
   ( basic_tests
   ) where
@@ -9,9 +10,8 @@ import System.Directory
 import System.IO
 
 import Test.Tasty
-import Test.Tasty.HUnit
+import Test.Tasty.HUnit as HU
 import Test.Tasty.QuickCheck
-import Test.QuickCheck
 
 import qualified Data.ABC as ABC
 import qualified Data.AIG.Trace as Tr
@@ -177,6 +177,28 @@ basic_tests proxy@(ABC.Proxy f) = f $
       z <- ABC.evaluate (ABC.Network g (ABC.bvToList y)) inputs
 
       assertEqual "aiger_eval" outputs z
+
+  , testCase "lit_view" $ do
+       ABC.SomeGraph g <- ABC.newGraph proxy
+       i  <- ABC.newInput g
+       lv <- ABC.litView g i
+       x  <- ABC.newInput g
+       xv <- ABC.litView g x
+       o  <- ABC.and g i x
+       lo <- ABC.litView g o
+
+       case lv of
+         ABC.Input 0 -> return ()
+         _ -> fail "expected input 0"
+
+       case xv of
+         ABC.Input 1 -> return ()
+         _ -> fail "expected input 1"
+
+       case lo of
+         ABC.And a1 a2
+           | a1 ABC.=== i, a2 ABC.=== x -> return ()
+         _ -> fail "expected and literal"
   ]
 
 cecNetwork :: ABC.IsAIG l g => ABC.Proxy l g -> IO (ABC.Network l g)

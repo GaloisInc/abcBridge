@@ -5,8 +5,8 @@ module Tests.Operations
 
 import qualified Data.AIG as AIG
 import Test.Tasty
-import Test.Tasty.QuickCheck
 import Test.QuickCheck
+import Test.Tasty.QuickCheck
 
 bv :: AIG.IsAIG l g => g s -> Int -> Integer -> AIG.BV (l s)
 bv = AIG.bvFromInteger
