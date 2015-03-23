@@ -37,7 +37,6 @@ module Data.ABC.GIA
     , proxy
       -- * Inspection
     , AIG.LitView(..)
-    , litView
       -- * File IO
     , readAiger
     , writeAigerWithLatches
@@ -65,6 +64,7 @@ import           Data.IORef
 import qualified Data.AIG as AIG
 import           Data.AIG.Interface (LitView(..))
 import qualified Data.AIG.Trace as Tr
+import           Data.Traversable (traverse)
 
 import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Unboxed as V
@@ -197,6 +197,10 @@ instance AIG.IsAIG Lit GIA where
   aigerNetwork _ = readAiger
 
   abstractEvaluateAIG (GIA fp) = litEvaluator fp
+
+  litView g (L l) =
+    withGIAPtr g $ \p ->
+      traverse (\x -> L <$> giaObjToLit p x) =<< litViewInner =<< giaObjFromLit p l
 
   writeAiger path g = do
     withNetworkPtr g $ \p -> do
@@ -374,8 +378,8 @@ fanin0Lit o v = do
   c0 <- giaObjFaninC0 o
   return $ giaLitNotCond (giaVarLit v0) c0
 
-fanin1Lit :: Gia_Obj_t -> GiaVar -> IO GiaLit
-fanin1Lit o v = do
+_fanin1Lit :: Gia_Obj_t -> GiaVar -> IO GiaLit
+_fanin1Lit o v = do
   v0 <- giaObjFaninId1 o v
   c0 <- giaObjFaninC1 o
   return $ giaLitNotCond (giaVarLit v0) c0
@@ -393,52 +397,34 @@ litEvaluator fp viewFn = do
         case Map.lookup o m0 of
           Just t -> return t
           _ -> do
-            let c = giaIsComplement o
-            let o' = if c then giaRegular o else o
-            isTerm <- giaObjIsTerm o'
-            d0 <- giaObjDiff0 o'
-            case () of
-              _ | Prelude.not isTerm && d0 /= gia_none -> do -- And gate
-                    x <- objTerm =<< giaObjChild0 o'
-                    y <- objTerm =<< giaObjChild1 o'
-                    let and_ = if c then NotAnd else And
-                    memo r o =<< viewFn (and_ x y)
-                | isTerm && d0 /= gia_none -> do -- Primary output
-                    -- This is a primary output, so we just get the lit
-                    -- for the gate that it is attached to.
+            memo r o =<< viewFn =<< traverse objTerm =<< litViewInner o
 
-                    -- FIXME? is this the right thing to do WRT complement?
-                    objTerm =<< giaObjChild0 o'
-                | Prelude.not isTerm -> do -- Constant value
-                    memo r o =<< viewFn (if c then TrueLit else FalseLit)
-                | otherwise -> do -- Primary input
-                    memo r o =<< viewFn . (if c then NotInput else Input) . fromIntegral
-                              =<< giaObjDiff1 o'
   return $ (\(L l) -> withForeignPtr fp $ \p -> objTerm =<< giaObjFromLit p l)
 
 
--- | Return a representation of how lit was constructed.
-litView :: GIA s -> Lit s -> IO (LitView (Lit s))
-litView g (L l)
-  | l == giaManConst0Lit = return FalseLit
-  | l == giaManConst1Lit = return TrueLit
-  | otherwise = do
-    let c = giaLitIsCompl l
-    let v = giaLitVar l
-    withGIAPtr g $ \p -> do
-    o <- giaManObj p v
-    t <- giaObjIsTerm o
-    d0 <- giaObjDiff0 o
-    if t && (d0 == gia_none) then do
-      idx <- fromIntegral <$> giaObjDiff1 o
-      return $ if c then NotInput idx else Input idx
-    else if t then do
-      l0 <- L <$> fanin0Lit o v
-      l1 <- L <$> fanin1Lit o v
-      return $ if c then NotAnd l0 l1 else And l0 l1
-    else
-      error $ "Invalid literal"
+{-# INLINE litViewInner #-}
+litViewInner :: Gia_Obj_t -> IO (LitView Gia_Obj_t)
+litViewInner o = do
+   let c = giaIsComplement o
+   let o' = if c then giaRegular o else o
+   isTerm <- giaObjIsTerm o'
+   d0 <- giaObjDiff0 o'
+   case () of
+      _ | Prelude.not isTerm && d0 /= gia_none -> do -- And gate
+            x <- giaObjChild0 o'
+            y <- giaObjChild1 o'
+            let and_ = if c then NotAnd else And
+            return $ and_ x y
+        | isTerm && d0 /= gia_none -> do -- Primary output
+            -- This is a primary output, so we just get the lit
+            -- for the gate that it is attached to.
 
+            -- FIXME? is this the right thing to do WRT complement?
+            litViewInner =<< giaObjChild0 o'
+        | Prelude.not isTerm -> do -- Constant value
+            return $ if c then TrueLit else FalseLit
+        | otherwise -> do -- Primary input
+            (if c then NotInput else Input) . fromIntegral <$> giaObjDiff1 o'
 
 -- | Allocate a vec int array from Boolean list.
 withBoolAsVecInt :: [Bool]
@@ -463,7 +449,6 @@ getVecIntAsBool v = do
       1 -> return True
       _ -> fail $ "getVecAsBool given bad value " ++ show e
 
-data PartialSatResult
 -- | Check a formula of the form Ex.Ay p(x,y)@.
 -- This function takes a network where input variables are used to
 -- represent both the existentially and the universally quantified variables.

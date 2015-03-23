@@ -208,15 +208,15 @@ memoFoldAIG g view = do
            m <- readIORef r
            case Map.lookup o m of
               Just t -> return t
-              _ -> memo o =<< go =<< litView o
+              _ -> memo o =<< go =<< litViewInner o
 
     -- NB: Pin down the AIG foreign pointer, even though we don't explicitly use it
     return $ (\l -> withAIGPtr g $ \_p -> objTerm l)
 
 -- Return a representation of how lit was constructed.
 -- NB: hold the AIG pointer to the graph to call this function...
-litView :: Lit s -> IO (LitView (Lit s))
-litView (Lit l) = do
+litViewInner :: Lit s -> IO (LitView (Lit s))
+litViewInner (Lit l) = do
   let c = abcObjIsComplement l
   let o = abcObjRegular l
   i <- abcObjId o
@@ -292,6 +292,8 @@ instance AIG.IsAIG Lit AIG where
           (poke pp =<< abcNtkDup p)
           (abcNtkDelete =<< peek pp)
           (checkSat' pp)
+
+  litView g l = withAIGPtr g $ \_ -> litViewInner l
 
   abstractEvaluateAIG = memoFoldAIG
 

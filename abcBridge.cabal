@@ -91,7 +91,7 @@ library
 
   Build-depends:
     base >= 4,
-    aig >= 0.2.2,
+    aig >= 0.2.3,
     containers,
     directory,
     vector
