@@ -5,6 +5,7 @@ set -e
 
 echo "Setting up ABC tree for abcBridge version ${PACKAGE_VERSION:-undefined}..."
 
+
 if [ -z "${PACKAGE_VERSION}" ]; then
   if [ -d abc-build ]; then
     echo ""
@@ -19,39 +20,50 @@ if [ -z "${PACKAGE_VERSION}" ]; then
 else
   LOCAL_TARBALL="galois-abcBridge-${PACKAGE_VERSION}.tar.bz2"
   SRC_TARBALL="https://bitbucket.org/rdockins/abc/get/${LOCAL_TARBALL}"
+  SUCCESS=""
 
-  # If the ABC source is not already fetched, download the galois-abcBridge
-  # branch of the ABC project and unpack it in the "abc-build" subdirectory
-  if [ ! -d abc-build ]; then
-    # Fetch the latest galois-abcBridge branch from BitBucket; use either curl or wget
-    # depending on which is installed
-    [ -e $LOCAL_TARBALL ] || curl -O $SRC_TARBALL || wget --no-check-certificate $SRC_TARBALL
+  # try at most twice to fetch sources...
+  for i in "one" "two"
+  do
+      # If the ABC source is not already fetched, download the galois-abcBridge
+      # branch of the ABC project and unpack it in the "abc-build" subdirectory
+      if [ ! -d abc-build ]; then
+	  # Fetch the latest galois-abcBridge branch from BitBucket; use either curl or wget
+	  # depending on which is installed
+	  [ -e $LOCAL_TARBALL ] || curl -O $SRC_TARBALL || wget --no-check-certificate $SRC_TARBALL
 
-    # Unpack into the abc-build subdirectory
-    # Note: some games are played to strip off the top-level directory name that
-    # is automatically assigned by BitBucket
-    mkdir -p abc-build && (cd abc-build; tar xfj "../$LOCAL_TARBALL" --strip-components=1)
-  fi
+	  # Unpack into the abc-build subdirectory
+	  # Note: some games are played to strip off the top-level directory name that
+	  # is automatically assigned by BitBucket
+	  mkdir -p abc-build && (cd abc-build; tar xfj "../$LOCAL_TARBALL" --strip-components=1)
+      fi
 
-  # Interrogate the expected version number of the ABC sources
-  if [ -e abc-build/galois-abcBridge.version ]; then
-    ABC_VERSION=`cat abc-build/galois-abcBridge.version`
-  else
-    ABC_VERSION="NONE"
-  fi
+      # Interrogate the expected version number of the ABC sources
+      if [ -e abc-build/galois-abcBridge.version ]; then
+	  ABC_VERSION=`cat abc-build/galois-abcBridge.version`
+      else
+	  ABC_VERSION="NONE"
+      fi
 
-  PACKAGE_VERSION=${PACKAGE_VERSION:-"$ABC_VERSION"}
+      if [ "$ABC_VERSION" != "$PACKAGE_VERSION" ]; then
+	  echo ""
+	  echo "The ABC source version $ABC_VERSION does not match the abcBridge package version $PACKAGE_VERSION."
+	  echo ""
+	  echo "Attempting to clean up and fetch fresh sources..."
 
-  if [ "$ABC_VERSION" != "$PACKAGE_VERSION" ]; then
-    echo ""
-    echo "The ABC source version $ABC_VERSION does not match the abcBridge package version $PACKAGE_VERSION."
-    echo ""
-    echo "This may cause problems with the build; it is recommended you cancel this build and check out matching ABC sources"
-    echo "into the abc-build directory and try again.  You can run scripts/clean_abc.sh to remove the current ABC sources;"
-    echo "this will cause latest development branch to be automatically downloaded on the next build."
-    echo ""
-    echo "Press [enter] to continue anyway, or press [^C] to abort (build will automatically abort in 15 seconds)."
-    read -t 15
+	  rm -r abc-build     || true
+	  rm "$LOCAL_TARBALL" || true
+      else
+	  echo "ABC sources found"
+	  SUCCESS="success"
+	  break
+      fi
+  done
+
+  if [ -z "${SUCCESS}" ]; then
+      echo ""
+      echo "Unable to fetch ABC sources. Giving up..."
+      exit 1
   fi
 fi
 
