@@ -1,10 +1,3 @@
-{-# LANGUAGE EmptyDataDecls #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# OPTIONS_GHC -fno-warn-unused-matches #-}
-
 {- |
 Module      : Data.ABC.Internal.GIA
 Copyright   : Galois, Inc. 2010-2014
@@ -20,9 +13,14 @@ functions power the next-generation of ABC algorithms that have
 not been officially released yet, and can be identified by the
 prefix of an ampersand, as in @&cec@, in the interactive ABC
 interface.
-
 -}
-
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
+{-# OPTIONS_GHC -fno-warn-unused-matches #-}
 module Data.ABC.Internal.GIA (
       Gia_Man_t
     , Gia_Man_t_
@@ -114,7 +112,7 @@ module Data.ABC.Internal.GIA (
     , clearGiaObj
     ) where
 
-import Control.Applicative
+import Control.Applicative ((<$>), (<*>))
 import Control.Exception
 import Control.Monad
 import Foreign hiding (void)

@@ -1,7 +1,3 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE EmptyDataDecls #-}
-{-# OPTIONS_GHC -fno-warn-unused-matches #-}
-
 {- |
 Module      : Data.ABC.Internal.FRAIG
 Copyright   : Galois, Inc. 2010-2014
@@ -14,13 +10,16 @@ Portability : non-portable (c2hs, language extensions)
 process of generating functionally reduced AIGs.  Fraiging is the
 special sauce that makes ABC outperform many vanilla SAT solvers.
 -}
-
+{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
+{-# OPTIONS_GHC -fno-warn-unused-matches #-}
 module Data.ABC.Internal.FRAIG
     ( Prove_Params_t_(..)
     , proveParamsDefault
     ) where
 
-import Control.Applicative
+import Control.Applicative ((<$>), (<*>))
 import Control.Monad
 import Foreign
 import Foreign.C

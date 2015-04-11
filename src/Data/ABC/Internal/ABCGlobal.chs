@@ -1,8 +1,3 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE EmptyDataDecls #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# OPTIONS_GHC -fno-warn-unused-matches #-}
-
 {- |
 Module      : Data.ABC.Internal.ABCGlobal
 Copyright   : (c) Galois, Inc. 2010
@@ -14,9 +9,12 @@ Portability : not portable (c2hs, language extensions)
 /Incomplete./  Binding of @misc\/util\/abc_global.h@ which contains
 miscellaneous functions for ABC, including a counterexample datastructure
 and error handling mechanisms.
-
 -}
-
+{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
+{-# OPTIONS_GHC -fno-warn-unused-matches #-}
 module Data.ABC.Internal.ABCGlobal (
     -- * Counterexamples
       Abc_Cex_t_(..)
@@ -28,9 +26,9 @@ module Data.ABC.Internal.ABCGlobal (
 #include "abc_global.h"
 #include "abcbridge.h"
 
-import Data.Word
-import Control.Applicative
 import Control.Exception (assert)
+import Data.Functor ((<$>))
+import Data.Word
 import Foreign
 import Foreign.C
 

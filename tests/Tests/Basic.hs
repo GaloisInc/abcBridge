@@ -1,9 +1,12 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE PatternGuards #-}
 module Tests.Basic
   ( basic_tests
   ) where
 
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative
+#endif
 import Control.Exception
 import Control.Monad
 import System.Directory
@@ -15,7 +18,6 @@ import Test.Tasty.QuickCheck
 
 import qualified Data.ABC as ABC
 import qualified Data.AIG.Trace as Tr
-
 
 tryIO :: IO a -> IO (Either IOException a)
 tryIO = try

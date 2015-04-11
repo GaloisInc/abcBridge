@@ -1,6 +1,3 @@
-{-# LANGUAGE ForeignFunctionInterface, EmptyDataDecls #-}
-{-# OPTIONS_GHC -fno-warn-unused-matches #-}
-
 {- |
 Module      : Data.ABC.Internal.AIG
 Copyright   : Galois, Inc. 2010
@@ -14,9 +11,10 @@ next-generation heavy-weight AIG representation (similar to the original
 "Data.ABC.Internal.ABC") which is used in internal versions
 (@base\/abci\/abc.c@) 8D, 8 and occasionally for 9 (during which the GIA
 is temporarily converted into an AIG for some processing.)
-
 -}
-
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
+{-# OPTIONS_GHC -fno-warn-unused-matches #-}
 module Data.ABC.Internal.AIG (
     -- * Types
     -- ** Enums
@@ -54,7 +52,6 @@ module Data.ABC.Internal.AIG (
 #include "aig.h"
 #include "abcbridge.h"
 
-import Control.Applicative
 import Foreign
 import Foreign.C
 
@@ -102,7 +99,7 @@ aigManObjNumMax man =
   vecPtrSize =<< {#get Aig_Man_t->vObjs #} man
 
 aigManConst0 :: Aig_Man_t -> IO Aig_Obj_t
-aigManConst0 m = aigNot <$> aigManConst1 m
+aigManConst0 m = aigNot `fmap` aigManConst1 m
 
 aigManConst1 :: Aig_Man_t -> IO Aig_Obj_t
 aigManConst1 = {#get Aig_Man_t->pConst1 #}

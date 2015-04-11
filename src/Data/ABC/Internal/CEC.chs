@@ -1,7 +1,3 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE EmptyDataDecls #-}
-{-# OPTIONS_GHC -fno-warn-unused-matches #-}
-
 {- |
 Module      : Data.ABC.Internal.CEC
 Copyright   : Galois, Inc. 2010-2014
@@ -14,7 +10,10 @@ Comprehensive binding of @aig\/cec\/cec.h@ for performing combinational
 equivalence checking of scalable and-inverter graphs (GIA).
 
 -}
-
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE ForeignFunctionInterface #-}
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
+{-# OPTIONS_GHC -fno-warn-unused-matches #-}
 module Data.ABC.Internal.CEC (
     -- * Types
     -- ** Storable types
