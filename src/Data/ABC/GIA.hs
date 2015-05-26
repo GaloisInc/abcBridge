@@ -221,34 +221,7 @@ instance AIG.IsAIG Lit GIA where
         (abcNtkDelete =<< peek pp)
         (AIG.checkSat' pp)
 
-  cec gx gy = do
-    withNetworkPtr gx $ \x -> do
-    withNetworkPtr gy $ \y -> do
-
-    input_count_x <- giaManCiNum x
-    input_count_y <- giaManCiNum y
-
-    output_count_x <- vecIntSize =<< giaManCos x
-    output_count_y <- vecIntSize =<< giaManCos y
-
-    assert (input_count_x == input_count_y) $ do
-    assert (output_count_x == output_count_y) $ do
-
-    bracket (giaManMiter x y 0 True False False False) giaManStop $ \m -> do
-    r <- cecManVerify m cecManCecDefaultParams
-    case r of
-      1 -> return AIG.Valid
-      0 -> do
-        pCex <- giaManCexComb m
-        when (pCex == nullPtr) $ error "cec: Generated counter-example was invalid"
-        cex <- peekAbcCex pCex
-        let r2 = pData'inputs'Abc_Cex cex
-        case r2 of
-          [] -> error "cec: Generated counter-example had no inputs"
-          [bs] -> return (AIG.Invalid bs)
-          _ -> error "cec: Generated counter example has too many frames"
-      -1 -> fail "cec: failed"
-      _  -> error "cec: Unrecognized return code"
+  cec gx gy = withTwoNetworkPtrs gx gy $ giaRunCEC
 
   evaluator g inputs = do
     withGIAPtr g $ \p -> do
@@ -289,6 +262,26 @@ pureEvaluateFn v (L l) = assert inRange (c /= (v V.! i))
         c = giaLitIsCompl l
         inRange = 0 <= i && i < V.length v
 
+
+-- | Run an inner computation with two networks, while ensuring that
+--   the storage for the two networks is distinct.  We do this by
+--   copying on of the two networks if they are from the same
+--   underlying physical ABC network.
+withTwoNetworkPtrs :: AIG.Network Lit GIA
+                   -> AIG.Network Lit GIA
+                   -> (Gia_Man_t -> Gia_Man_t -> IO a)
+                   -> IO a
+withTwoNetworkPtrs g1@(AIG.Network ntk1 _) g2@(AIG.Network ntk2 _) m =
+  withGIAPtr ntk1 $ \p1 ->
+    withGIAPtr ntk2 $ \p2 ->
+      if p1 == p2
+         then withNetworkPtr_Copy g1 $ \x ->
+              withNetworkPtr_Munge g2 $ \y ->
+              m x y
+         else withNetworkPtr_Munge g1 $ \x ->
+              withNetworkPtr_Munge g2 $ \y ->
+              m x y
+
 -- | Run computation with a Gia_Man_t containing the given network.
 withNetworkPtr :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
 withNetworkPtr = withNetworkPtr_Munge
@@ -300,8 +293,8 @@ withNetworkPtr = withNetworkPtr_Munge
 -- This is a safer method for implementing withNetworkPtr; it copies the
 -- entire graph before adding the required COs and disposes of the copied
 -- graph afterwards.  Obviously, this has substantial memory usage implications.
-_withNetworkPtr_Copy :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
-_withNetworkPtr_Copy (AIG.Network ntk out) m = do
+withNetworkPtr_Copy :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
+withNetworkPtr_Copy (AIG.Network ntk out) m = do
   withGIAPtr ntk $ \p -> do
      ncos <- vecIntSize =<< giaManCos p
      assert( ncos == 0 ) $ do
@@ -356,6 +349,38 @@ withNetworkPtr_Munge (AIG.Network ntk out) m = do
       reset
       -- Run computation.
       (m p)
+
+
+giaRunCEC :: Gia_Man_t
+          -> Gia_Man_t
+          -> IO AIG.VerifyResult
+giaRunCEC x y = do
+    input_count_x <- giaManCiNum x
+    input_count_y <- giaManCiNum y
+
+    output_count_x <- vecIntSize =<< giaManCos x
+    output_count_y <- vecIntSize =<< giaManCos y
+
+    assert (input_count_x == input_count_y) $ do
+    assert (output_count_x == output_count_y) $ do
+
+    bracket (giaManMiter x y 0 True False False False) giaManStop $ \m -> do
+    r <- cecManVerify m cecManCecDefaultParams
+    case r of
+      1 -> return AIG.Valid
+      0 -> do
+        pCex <- giaManCexComb m
+        when (pCex == nullPtr) $ error "cec: Generated counter-example was invalid"
+        cex <- peekAbcCex pCex
+        let r2 = pData'inputs'Abc_Cex cex
+        case r2 of
+          [] -> error "cec: Generated counter-example had no inputs"
+          [bs] -> return (AIG.Invalid bs)
+          _ -> error "cec: Generated counter example has too many frames"
+      -1 -> fail "cec: failed"
+      _  -> error "cec: Unrecognized return code"
+
+
 
 -- | Run a computation with an AIG man created from a GIA netowrk.
 giaNetworkAsAIGMan :: AIG.Network Lit GIA
