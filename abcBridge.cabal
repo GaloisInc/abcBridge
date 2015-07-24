@@ -75,7 +75,11 @@ library
   }
 
   if os(windows) {
+    if arch(x86_64) {
+     CC-options: -D_WIN64
+    } else {
      Cc-options: -D_WIN32
+    }
   }
 
   if !os(windows) {
