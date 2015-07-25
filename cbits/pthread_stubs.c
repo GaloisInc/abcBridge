@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
 #include "../abc-build/lib/pthread.h"
 
 #else
