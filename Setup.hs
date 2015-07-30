@@ -47,6 +47,11 @@ main = defaultMainWithHooks simpleUserHooks
                     pkg_desc' <- abcPkgDesc (localPkgDescr lbi)
                     return lbi{ localPkgDescr = pkg_desc' }
 
+    , cleanHook = \pkg_desc unit uh cf -> do
+                    let v = fromFlag $ cleanVerbosity cf
+                    cleanAbc v
+                    cleanHook simpleUserHooks pkg_desc unit uh cf
+
     , sDistHook = \pkg_desc lbi h f -> do
                     let v = fromFlag $ sDistVerbosity f
                     setupAbc v pkg_desc
@@ -82,6 +87,11 @@ onWindows :: Monad m => m () -> m ()
 onWindows act = case buildPlatform of
                   Platform _ Windows -> act
                   _                  -> return ()
+
+-- call "make clean" in the abc directory, if it exists
+cleanAbc :: Verbosity -> IO ()
+cleanAbc verbosity = do
+    rawSystemExit verbosity "sh" ["scripts" </> "lite-clean-abc.sh"]
 
 -- If necessary, fetch the ABC sources and prepare for building
 setupAbc :: Verbosity -> PackageDescription -> IO ()

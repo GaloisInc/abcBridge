@@ -36,3 +36,9 @@ flags depending on the arch and OS and then invoking the ABC makefile.
 
 Run "scripts/clean-abc.sh" if you want to remove all ABC source
 artifacts and force a redownload from the BitBucket project.
+
+
+Cutting a Hackage release
+-------------------------
+
+See README.releases for instructions.

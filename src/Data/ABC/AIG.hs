@@ -1,12 +1,3 @@
-{-# LANGUAGE DoAndIfThenElse #-}
-{-# LANGUAGE EmptyDataDecls #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE ViewPatterns #-}
-
 {- |
 Module      : Data.ABC.AIG
 Copyright   : Galois, Inc. 2010-2014
@@ -23,7 +14,15 @@ should be imported @qualified@, e.g.
 > import qualified Data.ABC.AIG as AIG
 
 -}
-
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE DoAndIfThenElse #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ViewPatterns #-}
 module Data.ABC.AIG
   ( AIG
   , newAIG
@@ -32,7 +31,6 @@ module Data.ABC.AIG
   , Lit
   , true
   , false
-  , writeToCNF
   , writeAIGManToCNFWithMapping
   , checkSat'
     -- * Re-exports
@@ -49,7 +47,9 @@ import Prelude hiding (and, or, not)
 
 import Foreign
 
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative
+#endif
 import Control.Exception
 import Control.Monad
 import qualified Data.Vector.Storable as V
@@ -171,7 +171,13 @@ checkSat' pp = do
     Just True -> return (AIG.Sat (replicate ic False))
     Just False  -> return AIG.Unsat
     Nothing -> do
-      let params = proveParamsDefault { nItersMax'Prove_Params = 5 }
+      let params = proveParamsDefault
+                   { nItersMax'Prove_Params = 5
+                   -- Using rewriting seems to trigger a bug in some cases,
+                   -- so here we diable it.  It also seems to be faster on
+                   -- some examples to disable?
+                   , fUseRewriting'Prove_Params = False
+                   }
       with params $ \pParams -> do
         r <- abcNtkIvyProve pp (castPtr pParams)
         case r of
@@ -203,15 +209,15 @@ memoFoldAIG g view = do
            m <- readIORef r
            case Map.lookup o m of
               Just t -> return t
-              _ -> memo o =<< go =<< litView o
+              _ -> memo o =<< go =<< litViewInner o
 
     -- NB: Pin down the AIG foreign pointer, even though we don't explicitly use it
     return $ (\l -> withAIGPtr g $ \_p -> objTerm l)
 
 -- Return a representation of how lit was constructed.
 -- NB: hold the AIG pointer to the graph to call this function...
-litView :: Lit s -> IO (LitView (Lit s))
-litView (Lit l) = do
+litViewInner :: Lit s -> IO (LitView (Lit s))
+litViewInner (Lit l) = do
   let c = abcObjIsComplement l
   let o = abcObjRegular l
   i <- abcObjId o
@@ -271,6 +277,15 @@ instance AIG.IsAIG Lit AIG where
     withNetworkPtr a $ \p -> do
       ioWriteAiger p path True False False
 
+  writeCNF aig l path =
+    withNetworkPtr (AIG.Network aig [l]) $ \pNtk -> do
+      withAbcNtkToDar pNtk False False $ \pMan -> do
+        vars <- writeAIGManToCNFWithMapping pMan path
+        ciCount <- aigManCiNum pMan
+        forM [0..(ciCount - 1)] $ \i -> do
+          ci <- aigManCi pMan (fromIntegral i)
+          ((vars V.!) . fromIntegral) `fmap` (aigObjId ci)
+
   checkSat g l = do
     withNetworkPtr (AIG.Network g [l]) $ \p ->
       alloca $ \pp ->
@@ -278,6 +293,8 @@ instance AIG.IsAIG Lit AIG where
           (poke pp =<< abcNtkDup p)
           (abcNtkDelete =<< peek pp)
           (checkSat' pp)
+
+  litView g l = withAIGPtr g $ \_ -> litViewInner l
 
   abstractEvaluateAIG = memoFoldAIG
 
@@ -400,18 +417,6 @@ withAbcNtkToDar ntk exors registers h = do
   bracket (abcNtkToDar ntk exors registers)
           aigManStop
           h
-
--- | Write a CNF file to the given path.
--- Returns vector mapping combinational inputs to CNF Variable numbers.
-writeToCNF :: AIG s -> Lit s -> FilePath -> IO [Int]
-writeToCNF aig l path =
-  withNetworkPtr (AIG.Network aig [l]) $ \pNtk -> do
-    withAbcNtkToDar pNtk False False $ \pMan -> do
-      vars <- writeAIGManToCNFWithMapping pMan path
-      ciCount <- aigManCiNum pMan
-      forM [0..(ciCount - 1)] $ \i -> do
-        ci <- aigManCi pMan (fromIntegral i)
-        ((vars V.!) . fromIntegral) `fmap` (aigObjId ci)
 
 -- | Convert the network referred to by an AIG manager into CNF format
 -- and write to a file, returning a mapping from ABC object IDs to CNF

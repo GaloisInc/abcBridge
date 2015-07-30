@@ -1,0 +1,40 @@
+To cut a release of abcBridge, do the following:
+
+1) Merge the git 'master' branch into the 'hackage' branch.
+2) Do a 'cabal configure' to make sure the upstream ABC sources are around
+3) In the 'hackage' branch, update the cabal file to remove the '-dev' marker
+    from the version number, and do any other minor fixups needed for a public release
+4) Edit 'abc-build/galois-abcBridge.version' file to match the version found in the cabal file
+5) Run 'cabal sdist' to build the source package
+6) Test that the source package builds correctly in a fresh sandbox
+7) Upload to Hackage.  You will need to be one of the following listed people who
+   have maintainership privleges for this package:
+    - Rob Dockins
+
+
+After cutting the release:
+
+1) Checkout the 'master' branch
+2) Bump the version number in abcBridge.cabal to the next '-dev' number
+3) Move to the ABC mecurical repository
+4) Bump the version number in 'galois-abcBridge.version' to match the dev
+     number in the git master abcBridge.cabal
+5) Make a new Mercurical branch to match the version number:
+       hg branch galois-abcBridge-x.y.z-dev
+       hg commit
+       hg push --new-branch
+   This will cause bitbucket to make a branch-specific tarball download avaliable.
+6) Test that a clean build works correctly
+       cabal clean
+       sh ./scripts/clean-abc.sh
+       cabal install
+
+
+
+NOTES:
+
+The bitbucket.org forked repository for the ABC sources is currently:
+       https://bitbucket.org/rdockins/abc
+
+Concat Rob Dockins if need commit access. Alternately, create a separate fork
+on bitbucket and update the URL string appearing in 'scripts/setup-abc.sh'

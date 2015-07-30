@@ -1,10 +1,3 @@
-{-# LANGUAGE DoAndIfThenElse #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-
 {- |
 Module      : Data.ABC.GIA
 Copyright   : Galois, Inc. 2010-2014
@@ -24,9 +17,14 @@ Scalable and-inverter graphs are briefly described at the Berkeley
 Verification and Synthesis Research Center's website.
 <http://bvsrc.org/research.html#AIG%20Package>  It is a more memory
 efficient method of storing AIG graphs.
-
-
 -}
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE DoAndIfThenElse #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Data.ABC.GIA
     ( GIA
     , newGIA
@@ -37,11 +35,9 @@ module Data.ABC.GIA
     , proxy
       -- * Inspection
     , AIG.LitView(..)
-    , litView
       -- * File IO
     , readAiger
     , writeAigerWithLatches
-    , writeCNF
       -- * QBF
     , check_exists_forall
       -- * Re-exports
@@ -56,16 +52,17 @@ module Data.ABC.GIA
 
 import Prelude hiding (and, not, or)
 import qualified Prelude
-
-
 import Control.Exception hiding (evaluate)
 import Control.Monad
-import Control.Applicative
 import qualified Data.Map as Map
 import           Data.IORef
 import qualified Data.AIG as AIG
 import           Data.AIG.Interface (LitView(..))
 import qualified Data.AIG.Trace as Tr
+#if !MIN_VERSION_base(4,8,0)
+import Data.Functor
+import Data.Traversable (traverse)
+#endif
 
 import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Unboxed as V
@@ -199,9 +196,21 @@ instance AIG.IsAIG Lit GIA where
 
   abstractEvaluateAIG (GIA fp) = litEvaluator fp
 
+  litView g (L l) =
+    withGIAPtr g $ \p ->
+      traverse (\x -> L <$> giaObjToLit p x) =<< litViewInner =<< giaObjFromLit p l
+
   writeAiger path g = do
     withNetworkPtr g $ \p -> do
       giaAigerWrite p path False False
+
+  writeCNF ntk l f = do
+    giaNetworkAsAIGMan (AIG.Network ntk [l]) $ \pMan -> do
+      vars <- AIG.writeAIGManToCNFWithMapping pMan f
+      ciCount <- aigManCiNum pMan
+      forM [0..(ciCount - 1)] $ \i -> do
+        ci <- aigManCi pMan (fromIntegral i)
+        ((vars SV.!) . fromIntegral) `fmap` (aigObjId ci)
 
   checkSat ntk l = do
     giaNetworkAsAIGMan (AIG.Network ntk [l]) $ \pMan -> do
@@ -212,34 +221,7 @@ instance AIG.IsAIG Lit GIA where
         (abcNtkDelete =<< peek pp)
         (AIG.checkSat' pp)
 
-  cec gx gy = do
-    withNetworkPtr gx $ \x -> do
-    withNetworkPtr gy $ \y -> do
-
-    input_count_x <- giaManCiNum x
-    input_count_y <- giaManCiNum y
-
-    output_count_x <- vecIntSize =<< giaManCos x
-    output_count_y <- vecIntSize =<< giaManCos y
-
-    assert (input_count_x == input_count_y) $ do
-    assert (output_count_x == output_count_y) $ do
-
-    bracket (giaManMiter x y 0 True False False False) giaManStop $ \m -> do
-    r <- cecManVerify m cecManCecDefaultParams
-    case r of
-      1 -> return AIG.Valid
-      0 -> do
-        pCex <- giaManCexComb m
-        when (pCex == nullPtr) $ error "cec: Generated counter-example was invalid"
-        cex <- peekAbcCex pCex
-        let r2 = pData'inputs'Abc_Cex cex
-        case r2 of
-          [] -> error "cec: Generated counter-example had no inputs"
-          [bs] -> return (AIG.Invalid bs)
-          _ -> error "cec: Generated counter example has too many frames"
-      -1 -> fail "cec: failed"
-      _  -> error "cec: Unrecognized return code"
+  cec gx gy = withTwoNetworkPtrs gx gy $ giaRunCEC
 
   evaluator g inputs = do
     withGIAPtr g $ \p -> do
@@ -280,6 +262,26 @@ pureEvaluateFn v (L l) = assert inRange (c /= (v V.! i))
         c = giaLitIsCompl l
         inRange = 0 <= i && i < V.length v
 
+
+-- | Run an inner computation with two networks, while ensuring that
+--   the storage for the two networks is distinct.  We do this by
+--   copying on of the two networks if they are from the same
+--   underlying physical ABC network.
+withTwoNetworkPtrs :: AIG.Network Lit GIA
+                   -> AIG.Network Lit GIA
+                   -> (Gia_Man_t -> Gia_Man_t -> IO a)
+                   -> IO a
+withTwoNetworkPtrs g1@(AIG.Network ntk1 _) g2@(AIG.Network ntk2 _) m =
+  withGIAPtr ntk1 $ \p1 ->
+    withGIAPtr ntk2 $ \p2 ->
+      if p1 == p2
+         then withNetworkPtr_Copy g1 $ \x ->
+              withNetworkPtr_Munge g2 $ \y ->
+              m x y
+         else withNetworkPtr_Munge g1 $ \x ->
+              withNetworkPtr_Munge g2 $ \y ->
+              m x y
+
 -- | Run computation with a Gia_Man_t containing the given network.
 withNetworkPtr :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
 withNetworkPtr = withNetworkPtr_Munge
@@ -291,8 +293,8 @@ withNetworkPtr = withNetworkPtr_Munge
 -- This is a safer method for implementing withNetworkPtr; it copies the
 -- entire graph before adding the required COs and disposes of the copied
 -- graph afterwards.  Obviously, this has substantial memory usage implications.
-_withNetworkPtr_Copy :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
-_withNetworkPtr_Copy (AIG.Network ntk out) m = do
+withNetworkPtr_Copy :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
+withNetworkPtr_Copy (AIG.Network ntk out) m = do
   withGIAPtr ntk $ \p -> do
      ncos <- vecIntSize =<< giaManCos p
      assert( ncos == 0 ) $ do
@@ -348,6 +350,38 @@ withNetworkPtr_Munge (AIG.Network ntk out) m = do
       -- Run computation.
       (m p)
 
+
+giaRunCEC :: Gia_Man_t
+          -> Gia_Man_t
+          -> IO AIG.VerifyResult
+giaRunCEC x y = do
+    input_count_x <- giaManCiNum x
+    input_count_y <- giaManCiNum y
+
+    output_count_x <- vecIntSize =<< giaManCos x
+    output_count_y <- vecIntSize =<< giaManCos y
+
+    assert (input_count_x == input_count_y) $ do
+    assert (output_count_x == output_count_y) $ do
+
+    bracket (giaManMiter x y 0 True False False False) giaManStop $ \m -> do
+    r <- cecManVerify m cecManCecDefaultParams
+    case r of
+      1 -> return AIG.Valid
+      0 -> do
+        pCex <- giaManCexComb m
+        when (pCex == nullPtr) $ error "cec: Generated counter-example was invalid"
+        cex <- peekAbcCex pCex
+        let r2 = pData'inputs'Abc_Cex cex
+        case r2 of
+          [] -> error "cec: Generated counter-example had no inputs"
+          [bs] -> return (AIG.Invalid bs)
+          _ -> error "cec: Generated counter example has too many frames"
+      -1 -> fail "cec: failed"
+      _  -> error "cec: Unrecognized return code"
+
+
+
 -- | Run a computation with an AIG man created from a GIA netowrk.
 giaNetworkAsAIGMan :: AIG.Network Lit GIA
                    -> (Aig_Man_t -> IO a)
@@ -367,8 +401,8 @@ fanin0Lit o v = do
   c0 <- giaObjFaninC0 o
   return $ giaLitNotCond (giaVarLit v0) c0
 
-fanin1Lit :: Gia_Obj_t -> GiaVar -> IO GiaLit
-fanin1Lit o v = do
+_fanin1Lit :: Gia_Obj_t -> GiaVar -> IO GiaLit
+_fanin1Lit o v = do
   v0 <- giaObjFaninId1 o v
   c0 <- giaObjFaninC1 o
   return $ giaLitNotCond (giaVarLit v0) c0
@@ -386,52 +420,34 @@ litEvaluator fp viewFn = do
         case Map.lookup o m0 of
           Just t -> return t
           _ -> do
-            let c = giaIsComplement o
-            let o' = if c then giaRegular o else o
-            isTerm <- giaObjIsTerm o'
-            d0 <- giaObjDiff0 o'
-            case () of
-              _ | Prelude.not isTerm && d0 /= gia_none -> do -- And gate
-                    x <- objTerm =<< giaObjChild0 o'
-                    y <- objTerm =<< giaObjChild1 o'
-                    let and_ = if c then NotAnd else And
-                    memo r o =<< viewFn (and_ x y)
-                | isTerm && d0 /= gia_none -> do -- Primary output
-                    -- This is a primary output, so we just get the lit
-                    -- for the gate that it is attached to.
+            memo r o =<< viewFn =<< traverse objTerm =<< litViewInner o
 
-                    -- FIXME? is this the right thing to do WRT complement?
-                    objTerm =<< giaObjChild0 o'
-                | Prelude.not isTerm -> do -- Constant value
-                    memo r o =<< viewFn (if c then TrueLit else FalseLit)
-                | otherwise -> do -- Primary input
-                    memo r o =<< viewFn . (if c then NotInput else Input) . fromIntegral
-                              =<< giaObjDiff1 o'
   return $ (\(L l) -> withForeignPtr fp $ \p -> objTerm =<< giaObjFromLit p l)
 
 
--- | Return a representation of how lit was constructed.
-litView :: GIA s -> Lit s -> IO (LitView (Lit s))
-litView g (L l)
-  | l == giaManConst0Lit = return FalseLit
-  | l == giaManConst1Lit = return TrueLit
-  | otherwise = do
-    let c = giaLitIsCompl l
-    let v = giaLitVar l
-    withGIAPtr g $ \p -> do
-    o <- giaManObj p v
-    t <- giaObjIsTerm o
-    d0 <- giaObjDiff0 o
-    if t && (d0 == gia_none) then do
-      idx <- fromIntegral <$> giaObjDiff1 o
-      return $ if c then NotInput idx else Input idx
-    else if t then do
-      l0 <- L <$> fanin0Lit o v
-      l1 <- L <$> fanin1Lit o v
-      return $ if c then NotAnd l0 l1 else And l0 l1
-    else
-      error $ "Invalid literal"
+{-# INLINE litViewInner #-}
+litViewInner :: Gia_Obj_t -> IO (LitView Gia_Obj_t)
+litViewInner o = do
+   let c = giaIsComplement o
+   let o' = if c then giaRegular o else o
+   isTerm <- giaObjIsTerm o'
+   d0 <- giaObjDiff0 o'
+   case () of
+      _ | Prelude.not isTerm && d0 /= gia_none -> do -- And gate
+            x <- giaObjChild0 o'
+            y <- giaObjChild1 o'
+            let and_ = if c then NotAnd else And
+            return $ and_ x y
+        | isTerm && d0 /= gia_none -> do -- Primary output
+            -- This is a primary output, so we just get the lit
+            -- for the gate that it is attached to.
 
+            -- FIXME? is this the right thing to do WRT complement?
+            litViewInner =<< giaObjChild0 o'
+        | Prelude.not isTerm -> do -- Constant value
+            return $ if c then TrueLit else FalseLit
+        | otherwise -> do -- Primary input
+            (if c then NotInput else Input) . fromIntegral <$> giaObjDiff1 o'
 
 -- | Allocate a vec int array from Boolean list.
 withBoolAsVecInt :: [Bool]
@@ -456,18 +472,6 @@ getVecIntAsBool v = do
       1 -> return True
       _ -> fail $ "getVecAsBool given bad value " ++ show e
 
--- | Write a CNF file to the given path.
---   Returns vector mapping combinational inputs to CNF Variable numbers.
-writeCNF :: GIA s -> Lit s -> FilePath -> IO [Int]
-writeCNF ntk l f = do
-  giaNetworkAsAIGMan (AIG.Network ntk [l]) $ \pMan -> do
-    vars <- AIG.writeAIGManToCNFWithMapping pMan f
-    ciCount <- aigManCiNum pMan
-    forM [0..(ciCount - 1)] $ \i -> do
-      ci <- aigManCi pMan (fromIntegral i)
-      ((vars SV.!) . fromIntegral) `fmap` (aigObjId ci)
-
-data PartialSatResult
 -- | Check a formula of the form Ex.Ay p(x,y)@.
 -- This function takes a network where input variables are used to
 -- represent both the existentially and the universally quantified variables.
