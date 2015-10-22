@@ -49,7 +49,8 @@ module Data.ABC.GIA
     , AIG.VerifyResult(..)
     ) where
 
-import Prelude hiding (and, not, or)
+import Prelude ()
+import Prelude.Compat hiding (and, not, or)
 import qualified Prelude
 import Control.Exception hiding (evaluate)
 import Control.Monad
@@ -58,8 +59,6 @@ import           Data.IORef
 import qualified Data.AIG as AIG
 import           Data.AIG.Interface (LitView(..))
 import qualified Data.AIG.Trace as Tr
-import Prelude ()
-import Prelude.Compat
 
 import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Unboxed as V
