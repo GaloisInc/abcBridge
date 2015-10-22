@@ -53,7 +53,7 @@ import Prelude ()
 import Prelude.Compat hiding (and, not, or)
 import qualified Prelude
 import Control.Exception hiding (evaluate)
-import Control.Monad
+import Control.Monad.Compat
 import qualified Data.Map as Map
 import           Data.IORef
 import qualified Data.AIG as AIG
