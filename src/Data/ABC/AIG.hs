@@ -48,7 +48,7 @@ import Prelude.Compat hiding (and, or, not)
 import Foreign
 
 import Control.Exception
-import Control.Monad
+import Control.Monad.Compat
 import qualified Data.Vector.Storable as V
 import qualified Data.Vector.Storable.Mutable as VM
 import System.IO
