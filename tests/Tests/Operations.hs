@@ -1,5 +1,6 @@
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP #-}
 
 module Tests.Operations
   ( op_tests
@@ -85,6 +86,7 @@ test_lg2_up proxy@(AIG.Proxy f) = f $
     let expected = (lg2_up w (u' `mod` (2^w))) `mod` (2^w)
     return $ Just expected == AIG.asUnsigned g z
 
+#if MIN_VERSION_base(4,8,0)
 test_clz :: AIG.Proxy l g
             -- ^ Proxy
          -> TestTree
@@ -106,6 +108,7 @@ test_ctz proxy@(AIG.Proxy f) = f $
     z <- AIG.countTrailingZeros g (bv g w (toInteger u))
     let expected = toInteger $ Bits.countTrailingZeros u
     return $ Just expected == AIG.asUnsigned g z
+#endif
 
 op_tests :: AIG.Proxy l g -> [TestTree]
 op_tests proxy@(AIG.Proxy f) = f $
@@ -121,6 +124,8 @@ op_tests proxy@(AIG.Proxy f) = f $
   , unary_test "test_neg" proxy AIG.neg negate
   , test_lg2_down proxy
   , test_lg2_up proxy
+#if MIN_VERSION_base(4,8,0)
   , test_clz proxy
   , test_ctz proxy
+#endif
   ]
