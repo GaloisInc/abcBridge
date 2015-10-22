@@ -60,7 +60,6 @@ library
     Data.ABC.Util
   Default-Language:     Haskell98
   Default-Extensions:   ForeignFunctionInterface,
-                        CPP,
                         FlexibleContexts,
                         MultiParamTypeClasses,
                         EmptyDataDecls
@@ -95,6 +94,7 @@ library
 
   Build-depends:
     base >= 4,
+    base-compat >= 0.6.0,
     aig >= 0.2.3,
     containers,
     directory,
@@ -133,7 +133,8 @@ test-suite abc-test
   main-is:
     abc-test.hs
   build-depends:
-    base == 4.*,
+    base >= 4,
+    base-compat >= 0.6.0,
     abcBridge,
     aig,
     directory,
@@ -160,7 +161,8 @@ Executable find-segfault
   else
      buildable: True
      build-depends:
-       base == 4.*,
+       base >= 4,
+       base-compat >= 0.6.0,
        abcBridge,
        aig,
        directory,
@@ -192,6 +194,6 @@ Executable long-test
   main-is:
     long-test.hs
   build-depends:
-    base == 4.*,
-
+    base >= 4,
+    base-compat >= 0.6.0,
     abcBridge

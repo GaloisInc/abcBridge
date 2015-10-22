@@ -1,16 +1,14 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE PatternGuards #-}
 module Tests.Basic
   ( basic_tests
   ) where
 
-#if !MIN_VERSION_base(4,8,0)
-import Control.Applicative
-#endif
 import Control.Exception
 import Control.Monad
 import System.Directory
 import System.IO
+import Prelude ()
+import Prelude.Compat
 
 import Test.Tasty
 import Test.Tasty.HUnit as HU

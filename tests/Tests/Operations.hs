@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -11,9 +10,8 @@ import Test.Tasty
 import Test.QuickCheck
 import Test.Tasty.QuickCheck
 
-#if MIN_VERSION_base(4,8,0)
 import qualified Data.Bits as Bits
-#endif
+import qualified Data.Bits.Compat as Bits
 
 bv :: AIG.IsAIG l g => g s -> Int -> Integer -> AIG.BV (l s)
 bv = AIG.bvFromInteger
@@ -87,7 +85,6 @@ test_lg2_up proxy@(AIG.Proxy f) = f $
     let expected = (lg2_up w (u' `mod` (2^w))) `mod` (2^w)
     return $ Just expected == AIG.asUnsigned g z
 
-#if MIN_VERSION_base(4,8,0)
 test_clz :: AIG.Proxy l g
             -- ^ Proxy
          -> TestTree
@@ -109,7 +106,6 @@ test_ctz proxy@(AIG.Proxy f) = f $
     z <- AIG.countTrailingZeros g (bv g w (toInteger u))
     let expected = toInteger $ Bits.countTrailingZeros u
     return $ Just expected == AIG.asUnsigned g z
-#endif
 
 op_tests :: AIG.Proxy l g -> [TestTree]
 op_tests proxy@(AIG.Proxy f) = f $
@@ -125,8 +121,6 @@ op_tests proxy@(AIG.Proxy f) = f $
   , unary_test "test_neg" proxy AIG.neg negate
   , test_lg2_down proxy
   , test_lg2_up proxy
-#if MIN_VERSION_base(4,8,0)
   , test_clz proxy
   , test_ctz proxy
-#endif
   ]

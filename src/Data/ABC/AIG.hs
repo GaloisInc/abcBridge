@@ -14,7 +14,6 @@ should be imported @qualified@, e.g.
 > import qualified Data.ABC.AIG as AIG
 
 -}
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DoAndIfThenElse #-}
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -47,9 +46,6 @@ import Prelude hiding (and, or, not)
 
 import Foreign
 
-#if !MIN_VERSION_base(4,8,0)
-import Control.Applicative
-#endif
 import Control.Exception
 import Control.Monad
 import qualified Data.Vector.Storable as V
@@ -58,6 +54,8 @@ import System.IO
 import qualified System.IO.Unsafe as Unsafe
 import qualified Data.Map as Map
 import           Data.IORef
+import Prelude ()
+import Prelude.Compat
 
 
 
