@@ -42,7 +42,8 @@ module Data.ABC.AIG
   , AIG.SomeGraph(..)
   ) where
 
-import Prelude hiding (and, or, not)
+import Prelude ()
+import Prelude.Compat hiding (and, or, not)
 
 import Foreign
 
@@ -54,10 +55,6 @@ import System.IO
 import qualified System.IO.Unsafe as Unsafe
 import qualified Data.Map as Map
 import           Data.IORef
-import Prelude ()
-import Prelude.Compat
-
-
 
 import Data.ABC.Internal.ABC
 import Data.ABC.Internal.AIG
