@@ -11,8 +11,9 @@ import Test.Tasty
 import Test.QuickCheck
 import Test.Tasty.QuickCheck
 
+#if MIN_VERSION_base(4,8,0)
 import qualified Data.Bits as Bits
-import qualified Data.Bits.Compat as Bits
+#endif
 
 bv :: AIG.IsAIG l g => g s -> Int -> Integer -> AIG.BV (l s)
 bv = AIG.bvFromInteger
