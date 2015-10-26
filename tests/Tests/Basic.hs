@@ -4,7 +4,7 @@ module Tests.Basic
   ) where
 
 import Control.Exception
-import Control.Monad
+import Control.Monad.Compat
 import System.Directory
 import System.IO
 import Prelude ()
