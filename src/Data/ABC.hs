@@ -54,6 +54,10 @@ import Prelude hiding (and, not)
 
 type AIGLit = AIG.Lit
 
+{-# WARNING aigNetwork, readAigerAsAIG
+    "The Data.ABC.AIG module has known bugs (http://github.com/GaloisInc/abcBridge/issues/4) for which solutions do not currently exist.  Consider using Data.ABC.GIA instead."
+  #-}
+
 -- | Proxy for AIG interface.
 aigNetwork :: Proxy AIGLit AIG
 aigNetwork = AIG.proxy
