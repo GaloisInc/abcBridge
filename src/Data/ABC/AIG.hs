@@ -23,6 +23,9 @@ should be imported @qualified@, e.g.
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 module Data.ABC.AIG
+{-# WARNING
+    "The Data.ABC.AIG module has known bugs (http://github.com/GaloisInc/abcBridge/issues/4) for which solutions do not currently exist.  Consider using Data.ABC.GIA instead."
+  #-}
   ( AIG
   , newAIG
   , readAiger
