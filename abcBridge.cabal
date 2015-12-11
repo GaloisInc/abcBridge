@@ -1,5 +1,5 @@
 Name:               abcBridge
-Version:            0.14
+Version:            0.15
 Synopsis:           Bindings for ABC, A System for Sequential
                     Synthesis and Verification
 Description:        Bindings for ABC focused on creating And-Inverter
@@ -56,7 +56,6 @@ library
     Data.ABC.Util
   Default-Language:     Haskell98
   Default-Extensions:   ForeignFunctionInterface,
-                        CPP,
                         FlexibleContexts,
                         MultiParamTypeClasses,
                         EmptyDataDecls
@@ -71,7 +70,11 @@ library
   }
 
   if os(windows) {
+    if arch(x86_64) {
+     CC-options: -D_WIN64 -DHAVE_STRUCT_TIMESPEC
+    } else {
      Cc-options: -D_WIN32
+    }
   }
 
   if !os(windows) {
@@ -87,6 +90,7 @@ library
 
   Build-depends:
     base == 4.*,
+    base-compat >= 0.6.0,
     aig >= 0.2.3,
     containers,
     directory,
@@ -116,6 +120,7 @@ test-suite abc-test
     abc-test.hs
   build-depends:
     base == 4.*,
+    base-compat >= 0.6.0,
     abcBridge,
     aig,
     directory,
@@ -143,6 +148,7 @@ Executable find-segfault
      buildable: True
      build-depends:
        base == 4.*,
+       base-compat >= 0.6.0,
        abcBridge,
        aig,
        directory,
@@ -172,4 +178,5 @@ Executable long-test
     long-test.hs
   build-depends:
     base == 4.*,
+    base-compat >= 0.6.0,
     abcBridge

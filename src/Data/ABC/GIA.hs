@@ -18,7 +18,6 @@ Verification and Synthesis Research Center's website.
 <http://bvsrc.org/research.html#AIG%20Package>  It is a more memory
 efficient method of storing AIG graphs.
 -}
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DoAndIfThenElse #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE Rank2Types #-}
@@ -50,19 +49,16 @@ module Data.ABC.GIA
     , AIG.VerifyResult(..)
     ) where
 
-import Prelude hiding (and, not, or)
+import Prelude ()
+import Prelude.Compat hiding (and, not, or)
 import qualified Prelude
 import Control.Exception hiding (evaluate)
-import Control.Monad
+import Control.Monad.Compat
 import qualified Data.Map as Map
 import           Data.IORef
 import qualified Data.AIG as AIG
 import           Data.AIG.Interface (LitView(..))
 import qualified Data.AIG.Trace as Tr
-#if !MIN_VERSION_base(4,8,0)
-import Data.Functor
-import Data.Traversable (traverse)
-#endif
 
 import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Unboxed as V

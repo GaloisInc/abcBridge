@@ -14,7 +14,6 @@ should be imported @qualified@, e.g.
 > import qualified Data.ABC.AIG as AIG
 
 -}
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DoAndIfThenElse #-}
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -24,6 +23,9 @@ should be imported @qualified@, e.g.
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 module Data.ABC.AIG
+{-# WARNING
+    "The Data.ABC.AIG module has known bugs (http://github.com/GaloisInc/abcBridge/issues/4) for which solutions do not currently exist.  Consider using Data.ABC.GIA instead."
+  #-}
   ( AIG
   , newAIG
   , readAiger
@@ -43,23 +45,19 @@ module Data.ABC.AIG
   , AIG.SomeGraph(..)
   ) where
 
-import Prelude hiding (and, or, not)
+import Prelude ()
+import Prelude.Compat hiding (and, or, not)
 
 import Foreign
 
-#if !MIN_VERSION_base(4,8,0)
-import Control.Applicative
-#endif
 import Control.Exception
-import Control.Monad
+import Control.Monad.Compat
 import qualified Data.Vector.Storable as V
 import qualified Data.Vector.Storable.Mutable as VM
 import System.IO
 import qualified System.IO.Unsafe as Unsafe
 import qualified Data.Map as Map
 import           Data.IORef
-
-
 
 import Data.ABC.Internal.ABC
 import Data.ABC.Internal.AIG

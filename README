@@ -14,7 +14,9 @@ Building
 
 We have attempted to make `cabal install` work out of the box.  They
 have been tested on 64-bit Mac OS X with XCode, 32-bit and 64-bit CentOS
-Linux 5.x and 6.x, and 32-bit Windows XP with MinGW.
+Linux 5.x and 6.x, and 32-bit and 64-bit Windows XP with MinGW. On Windows,
+the 64-bit build is less well tested than the 32-bit build, so
+try a 32-bit build if you have trouble with the 64-bit build.
 
 
 ABC Sources
