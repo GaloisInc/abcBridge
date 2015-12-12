@@ -1,5 +1,5 @@
 Name:               abcBridge
-Version:            0.15-dev
+Version:            0.16-dev
 Synopsis:           Bindings for ABC, A System for Sequential
                     Synthesis and Verification
 Description:        Bindings for ABC focused on creating And-Inverter
@@ -93,7 +93,7 @@ library
 
 
   Build-depends:
-    base >= 4,
+    base == 4.*,
     base-compat >= 0.6.0,
     aig >= 0.2.3,
     containers,
@@ -133,7 +133,7 @@ test-suite abc-test
   main-is:
     abc-test.hs
   build-depends:
-    base >= 4,
+    base == 4.*,
     base-compat >= 0.6.0,
     abcBridge,
     aig,
@@ -161,7 +161,7 @@ Executable find-segfault
   else
      buildable: True
      build-depends:
-       base >= 4,
+       base == 4.*,
        base-compat >= 0.6.0,
        abcBridge,
        aig,
@@ -194,6 +194,6 @@ Executable long-test
   main-is:
     long-test.hs
   build-depends:
-    base >= 4,
+    base == 4.*,
     base-compat >= 0.6.0,
     abcBridge
