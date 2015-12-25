@@ -97,6 +97,9 @@ library
     base-compat >= 0.6.0,
     aig >= 0.2.3,
     containers,
+    -- The clock bounds below are an attempt to work around
+    --   https://github.com/corsis/clock/issues/35
+    clock == 0.5.*,
     directory,
     vector
   Extra-libraries:      abc
