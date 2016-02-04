@@ -77,7 +77,7 @@ library
     if arch(x86_64) {
      CC-options: -D_WIN64 -DHAVE_STRUCT_TIMESPEC
     } else {
-     Cc-options: -D_WIN32
+     Cc-options: -D_WIN32 -DHAVE_STRUCT_TIMESPEC
     }
   }
 
