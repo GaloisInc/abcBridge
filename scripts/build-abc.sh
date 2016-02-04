@@ -6,22 +6,6 @@ set -e
 ARCH="$1"
 OS="$2"
 
-# Default to do nothing for the REMOVE_CMD
-REMOVE_CMD=true
-
-REMOVE_ARGS="-R .drectve \
-  -R .debug \
-  -R .debug_abbrev \
-  -R .debug_aranges \
-  -R .debug_frame \
-  -R .debug_info \
-  -R .debug_line \
-  -R .debug_loc \
-  -R .debug_pubnames \
-  -R .debug_pubtypes \
-  -R .debug_ranges \
-  -R .debug_str"
-
 # Select architecture- and OS-dependent compiler flags
 case "$OS" in
   "Linux" | "OSX")
@@ -33,7 +17,6 @@ case "$OS" in
     esac ;;
   "Windows")
     S="libabc.dll"
-    #REMOVE_CMD="objcopy ${REMOVE_ARGS}"
     case "$ARCH" in
       "I386")
         A="-m32 \
@@ -74,4 +57,4 @@ if [ -z "$PTHREADS" ]; then
 fi
 
 cd abc-build
-make -j4 ARCHFLAGS="-DABC_LIB $A -static-libgcc" REMOVE_DRECTVE="$REMOVE_CMD" READLINE=0 PTHREADS="$PTHREADS" libabc.a $S
+make -j4 ARCHFLAGS="-DABC_LIB $A -static-libgcc" READLINE=0 PTHREADS="$PTHREADS" libabc.a $S
