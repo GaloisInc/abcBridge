@@ -33,7 +33,7 @@ case "$OS" in
     esac ;;
   "Windows")
     S="libabc.dll"
-    REMOVE_CMD="" # "objcopy ${REMOVE_ARGS}"
+    #REMOVE_CMD="objcopy ${REMOVE_ARGS}"
     case "$ARCH" in
       "I386")
         A="-m32 \
