@@ -89,10 +89,6 @@ library
       Cc-options:           -DLIN
     }
   }
-
-  if os(linux) {
-      Extra-libraries: libgcc_s
-  }
   Include-dirs:         include
 
 
