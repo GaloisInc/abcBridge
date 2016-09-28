@@ -37,6 +37,7 @@ source-repository head
   location: https://github.com/GaloisInc/abcBridge.git
 
 library
+
   Hs-source-dirs:       src
   Exposed-modules:
     Data.ABC
@@ -66,7 +67,7 @@ library
   Ghc-options:          -Wall -fno-ignore-asserts
   Ghc-prof-options:     -auto-all -caf-all
   -- -U__BLOCKS__ to work around https://github.com/haskell/c2hs/issues/29
-  Cc-options:           -U__BLOCKS__ -U__has_attribute -w
+  Cc-options:           -U__BLOCKS__ -U__has_attribute -U__has_feature
 
   if flag(enable-pthreads) {
     Cc-options: -DABC_USE_PTHREADS
