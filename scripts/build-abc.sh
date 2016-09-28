@@ -8,13 +8,22 @@ OS="$2"
 
 # Select architecture- and OS-dependent compiler flags
 case "$OS" in
-  "Linux" | "OSX")
+  "Linux")
+    S=""
+    case "$ARCH" in
+      "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 -static-libgcc" ;;
+      "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4 -static-libgcc" ;;
+      *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
+    esac ;;
+
+  "OSX")
     S=""
     case "$ARCH" in
       "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4" ;;
       "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4" ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
     esac ;;
+
   "Windows")
     S="libabc.dll"
     case "$ARCH" in
@@ -57,4 +66,4 @@ if [ -z "$PTHREADS" ]; then
 fi
 
 cd abc-build
-make -j4 ARCHFLAGS="-DABC_LIB $A -static-libgcc" REMOVE_DRECTVE="true" READLINE=0 PTHREADS="$PTHREADS" libabc.a $S
+make -j4 ARCHFLAGS="-DABC_LIB $A" REMOVE_DRECTVE="true" READLINE=0 PTHREADS="$PTHREADS" libabc.a $S
