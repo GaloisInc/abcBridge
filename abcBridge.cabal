@@ -66,12 +66,16 @@ library
                         EmptyDataDecls
   Ghc-options:          -Wall -fno-ignore-asserts
   Ghc-prof-options:     -auto-all -caf-all
-  -- -U__BLOCKS__ to work around https://github.com/haskell/c2hs/issues/29
-  Cc-options:           -U__BLOCKS__ -U__has_attribute -U__has_feature
 
   if flag(enable-pthreads) {
     Cc-options: -DABC_USE_PTHREADS
     Extra-libraries: pthread
+  }
+
+  if os(darwin) {
+    -- -U__BLOCKS__ to work around https://github.com/haskell/c2hs/issues/29
+    -- has_attribute and has_features undefined for similar reasons...
+    CC-options: -U__BLOCKS__ -U__has_attribute -U__has_feature
   }
 
   if os(windows) {
