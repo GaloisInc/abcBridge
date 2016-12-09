@@ -14,7 +14,8 @@ case "$OS" in
       "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 -static-libgcc" ;;
       "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4 -static-libgcc" ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
-    esac ;;
+    esac
+    NPROC=$(nproc) ;;
 
   "OSX")
     S=""
@@ -22,7 +23,8 @@ case "$OS" in
       "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4" ;;
       "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4" ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
-    esac ;;
+    esac
+    NPROC=$(sysctl -n hw.ncpu) ;;
 
   "Windows")
     S="libabc.dll"
@@ -56,7 +58,15 @@ case "$OS" in
            -UZLIB_DLL \
            -lmsvcrt" ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
-    esac ;;
+    esac
+    if type -p nproc; then
+      NPROC=$(nproc)
+    elif [ -nz "${NUMBER_OF_PROCESSORS:-}" ]; then
+      NPROC="$NUMBER_OF_PROCESSORS"
+    else
+      NPROC="1"
+    fi ;;
+
   *) echo "Unknown OS: $OS" ; exit 2 ;;
 esac
 
@@ -66,4 +76,4 @@ if [ -z "$PTHREADS" ]; then
 fi
 
 cd abc-build
-make -j4 ARCHFLAGS="-DABC_LIB $A" REMOVE_DRECTVE="true" READLINE=0 PTHREADS="$PTHREADS" libabc.a $S
+make -j$NPROC ARCHFLAGS="-DABC_LIB $A" REMOVE_DRECTVE="true" READLINE=0 PTHREADS="$PTHREADS" libabc.a $S
