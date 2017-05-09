@@ -1,6 +1,19 @@
-ghc: 8.0
+sudo: false
+language: c
+
+cache:
+  directories:
+  - $HOME/.ghc
+  - $HOME/.cabal
+  - $HOME/.stack
+
+matrix:
+  include:
+  - compiler: ": #stack 8.0.2"
+    addons: {apt: {packages: [libgmp-dev]}}
 
 before_install:
+  - unset CC
   - mkdir -p ~/.local/bin
   - export PATH=$HOME/.local/bin:$PATH
   - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
@@ -9,5 +22,4 @@ script:
   - stack setup
   - stack install alex
   - stack install happy
-  - stack build
   - stack test --no-terminal --skip-ghc-check --test-arguments="--xml=result.xml --quickcheck-tests=10000"
