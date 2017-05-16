@@ -1,3 +1,6 @@
+platform:
+  - x64
+
 build: off
 
 before_test:
