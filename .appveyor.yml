@@ -1,0 +1,22 @@
+build: off
+
+environment:
+  matrix:
+  - MSYSTEM: MINGW64
+
+before_test:
+  - set PATH=C:\Program Files\Git\mingw64\bin;%PATH%
+  - curl -sS -ostack.zip -L --insecure http://www.stackage.org/stack/windows-x86_64
+  - 7z x stack.zip stack.exe
+
+clone_folder: "c:\\stack"
+environment:
+  global:
+    STACK_ROOT: "c:\\sr"
+
+test_script:
+  - stack init
+  - stack setup > nul
+  - echo "" | stack install --no-terminal --jobs 1 alex
+  - echo "" | stack install --no-terminal --jobs 1 happy
+  - echo "" | stack test --no-terminal --jobs 1 --test-arguments="--xml=result.xml --quickcheck-tests=10000"
