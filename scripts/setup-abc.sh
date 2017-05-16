@@ -18,7 +18,7 @@ if [ -z "${PACKAGE_VERSION}" ]; then
     exit 1
   fi
 else
-  LOCAL_TARBALL="galois-abcBridge-${PACKAGE_VERSION}.tar.bz2"
+  LOCAL_TARBALL="galois-abcBridge-${PACKAGE_VERSION}.tar.gz"
   SRC_TARBALL="https://bitbucket.org/rdockins/abc/get/${LOCAL_TARBALL}"
   SUCCESS=""
 
@@ -35,7 +35,7 @@ else
 	  # Unpack into the abc-build subdirectory
 	  # Note: some games are played to strip off the top-level directory name that
 	  # is automatically assigned by BitBucket
-	  mkdir -p abc-build && (cd abc-build; tar xfj "../$LOCAL_TARBALL" --strip-components=1)
+	  mkdir -p abc-build && (cd abc-build; tar -xzf "../$LOCAL_TARBALL" --strip-components=1)
       fi
 
       # Interrogate the expected version number of the ABC sources
