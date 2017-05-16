@@ -1,9 +1,5 @@
 build: off
 
-environment:
-  matrix:
-  - MSYSTEM: MINGW64
-
 before_test:
   - set PATH=C:\Program Files\Git\mingw64\bin;%PATH%
   - curl -sS -ostack.zip -L --insecure http://www.stackage.org/stack/windows-x86_64
@@ -12,7 +8,8 @@ before_test:
 clone_folder: "c:\\stack"
 environment:
   global:
-    STACK_ROOT: "c:\\sr"
+  - STACK_ROOT: "c:\\sr"
+  - MSYSTEM: MINGW64
 
 test_script:
   - stack init
