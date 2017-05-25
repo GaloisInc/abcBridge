@@ -36,6 +36,12 @@ source-repository head
   type: git
   location: https://github.com/GaloisInc/abcBridge.git
 
+custom-setup
+  setup-depends: base
+               , directory
+               , filepath
+               , Cabal
+
 library
 
   Hs-source-dirs:       src
