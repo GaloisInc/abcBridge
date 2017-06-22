@@ -15,7 +15,7 @@ environment:
     MSYSTEM: MINGW64
 
 test_script:
-  - tar --version
+  - /usr/bin/tar --version
   - stack setup > nul
   - echo "" | stack install --no-terminal --jobs 1 alex
   - echo "" | stack install --no-terminal --jobs 1 happy

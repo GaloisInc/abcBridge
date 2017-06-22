@@ -36,7 +36,7 @@ else
 	  # Unpack into the abc-build subdirectory
 	  # Note: some games are played to strip off the top-level directory name that
 	  # is automatically assigned by BitBucket
-	  mkdir -p abc-build && (cd abc-build; cat "../$LOCAL_TARBALL" | tar xz --strip-components=1)
+	  mkdir -p abc-build && (cd abc-build; cat "../$LOCAL_TARBALL" | tar -x -z --strip-components=1)
       fi
 
       # Interrogate the expected version number of the ABC sources
