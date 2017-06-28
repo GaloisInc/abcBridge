@@ -5,8 +5,8 @@ set -e
 
 echo "Setting up ABC tree for abcBridge version ${PACKAGE_VERSION:-undefined}..."
 
-TAR=${TAR:-/usr/bin/tar}
-${TAR} --version
+which tar
+tar --version
 
 if [ -z "${PACKAGE_VERSION}" ]; then
   if [ -d abc-build ]; then
@@ -38,7 +38,7 @@ else
 	  # Unpack into the abc-build subdirectory
 	  # Note: some games are played to strip off the top-level directory name that
 	  # is automatically assigned by BitBucket
-	  mkdir -p abc-build && (cd abc-build; cat "../$LOCAL_TARBALL" | ${TAR} -x -z --strip-components=1)
+	  mkdir -p abc-build && (cd abc-build; cat "../$LOCAL_TARBALL" | tar -x -z --strip-components=1)
       fi
 
       # Interrogate the expected version number of the ABC sources
