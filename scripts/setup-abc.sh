@@ -3,6 +3,9 @@
 # bail out immediately if any command fails
 set -e
 
+# trace execution
+set -x
+
 echo "Setting up ABC tree for abcBridge version ${PACKAGE_VERSION:-undefined}..."
 
 if [ -z "${PACKAGE_VERSION}" ]; then
