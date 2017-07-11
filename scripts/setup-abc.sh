@@ -5,9 +5,6 @@ set -e
 
 echo "Setting up ABC tree for abcBridge version ${PACKAGE_VERSION:-undefined}..."
 
-which tar
-tar --version
-
 if [ -z "${PACKAGE_VERSION}" ]; then
   if [ -d abc-build ]; then
     echo ""
