@@ -32,12 +32,11 @@ else
       if [ ! -d abc-build ]; then
 	  # Fetch the latest galois-abcBridge branch from BitBucket; use either curl or wget
 	  # depending on which is installed
-	  [ -e $LOCAL_TARBALL ] || curl -O $SRC_TARBALL || wget --no-check-certificate $SRC_TARBALL
+	  [ -e $LOCAL_TARBALL ] || curl -O $SRC_TARBALL || wget --no-check-certificate $SRC_TARBALL;
 
-	  # Unpack into the abc-build subdirectory
-	  # Note: some games are played to strip off the top-level directory name that
-	  # is automatically assigned by BitBucket
-	  mkdir -p abc-build && (cd abc-build; unzip "../$LOCAL_TARBALL"; mv rdockins-abc-*/* .)
+          rm -rf abc-build rdockins-abc-*;
+          unzip $LOCAL_TARBALL;
+          mv rdockins-abc-* abc-build;
       fi
 
       # Interrogate the expected version number of the ABC sources
