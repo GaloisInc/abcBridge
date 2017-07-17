@@ -9,8 +9,10 @@ cache:
 
 matrix:
   include:
-  - compiler: ": #stack 8.0.2"
-    addons: {apt: {packages: [libgmp-dev]}}
+    - compiler: ": #stack 8.0.2"
+      addons: {apt: {packages: [libgmp-dev]}}
+    - os: osx
+      compiler: ": #stack 8.0.2"
 
 before_install:
   - unset CC
