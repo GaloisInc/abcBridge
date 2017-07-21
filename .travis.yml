@@ -11,14 +11,16 @@ matrix:
   include:
     - compiler: ": #stack 8.0.2"
       addons: {apt: {packages: [libgmp-dev]}}
+      env: STACK_URL="https://www.stackage.org/stack/linux-x86_64"
     - os: osx
       compiler: ": #stack 8.0.2"
+      env: STACK_URL="https://www.stackage.org/stack/osx-x86_64"
 
 before_install:
   - unset CC
   - mkdir -p ~/.local/bin
   - export PATH=$HOME/.local/bin:$PATH
-  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz
+  - travis_retry curl -L ${STACK_URL} | tar xz
   - mv stack-*/stack $HOME/.local/bin
 
 script:
