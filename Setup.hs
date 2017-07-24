@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 import Distribution.Simple
 import Distribution.Simple.Setup
 import Distribution.Simple.Utils (rawSystemExit, rawSystemExitWithEnv, installOrdinaryFile,
@@ -6,20 +8,27 @@ import Distribution.Simple.LocalBuildInfo (
         LocalBuildInfo(..), InstallDirs(..), absoluteInstallDirs)
 import Distribution.PackageDescription (PackageDescription(..), GenericPackageDescription(..),
         HookedBuildInfo(..), BuildInfo(..), emptyBuildInfo,
-        updatePackageDescription, FlagAssignment(..), FlagName(..))
+        updatePackageDescription, FlagAssignment(..))
 import Distribution.Verbosity (verbose, Verbosity(..))
 import Distribution.System (OS(..), Arch(..), Platform (..), buildOS, buildPlatform)
 import qualified Distribution.Simple.Utils
-import Data.Version( Version, showVersion )
 import System.Directory
 import System.FilePath
 import System.Environment( getEnvironment )
 import Control.Monad(when)
 
+#if MIN_VERSION_Cabal(2,0,0)
+import Distribution.Version( Version, showVersion )
+import Distribution.PackageDescription (mkFlagName)
+#else
+import Data.Version( Version, showVersion )
+import Distribution.PackageDescription (FlagName(..))
+#endif
+
 -- Here we install custom hooks to deal with fetching and building the ABC
 -- sources.  This mostly involves calling into the "scripts/setup-abc.sh"
 -- and "scripts/build-abc.sh" scripts at the proper times.
--- 
+--
 -- The other thing we must do is automagically munge the cabal description
 -- to handle the ABC source tree.  We do this by editing, at runtime, the
 -- cabal package description to include the ABC sources files to `extra-source-files`
@@ -73,12 +82,12 @@ abcPkgDesc pkg_desc = do
   abcSrcFiles <- fmap lines $ readFile $ "abc-build" </> "abc-sources.txt"
   abcInclDirs <- fmap lines $ readFile $ "abc-build" </> "abc-incl-dirs.txt"
   let pg' = updatePackageDescription (libDirAbc cwd abcInclDirs) pkg_desc
-  return pg'{ extraSrcFiles = extraSrcFiles pg' ++ abcSrcFiles 
+  return pg'{ extraSrcFiles = extraSrcFiles pg' ++ abcSrcFiles
             }
 
 libDirAbc :: FilePath -> [FilePath] -> HookedBuildInfo
 libDirAbc cwd abcInclDirs = (Just buildinfo, [])
-    where buildinfo = emptyBuildInfo 
+    where buildinfo = emptyBuildInfo
                       { includeDirs = abcInclDirs
                       , extraLibDirs = [cwd </> static_dir]
                       }
@@ -107,7 +116,7 @@ setupAbc verbosity pkg_desc = do
 -- Build the ABC library and put the files in the expected places
 buildAbc :: Verbosity -> FlagAssignment -> IO ()
 buildAbc verbosity fs = do
-    let pthreads = maybe "0" (\x -> if x then "1" else "0") $ lookup (FlagName "enable-pthreads") fs
+    let pthreads = maybe "0" (\x -> if x then "1" else "0") $ lookup (mkFlagName "enable-pthreads") fs
     env <- getEnvironment
     rawSystemExitWithEnv verbosity "sh"
         (("scripts"</>"build-abc.sh") : (tail . words . show $ buildPlatform))
@@ -139,3 +148,8 @@ postCopyAbc _ flags pkg_descr lbi = do
     createDirectoryIfMissingVerbose verbosity True binPref
     copy libPref "libabc.a"
     onWindows $ copy libPref "abc.dll"
+
+#if !(MIN_VERSION_Cabal(2,0,0))
+mkFlagName :: String -> FlagName
+mkFlagName = FlagName
+#endif
