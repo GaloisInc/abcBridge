@@ -1,5 +1,7 @@
-abcBridge: Haskell bindings for ABC
-===================================
+[![Build
+Status](https://travis-ci.org/GaloisInc/abcBridge.svg?branch=master)](https://travis-ci.org/GaloisInc/abcBridge)
+
+# abcBridge: Haskell bindings for ABC
 
 Directory structure:
 
@@ -9,8 +11,7 @@ Directory structure:
     tests/      Test scripts.
     scripts/	Build system scripts.
 
-Building
---------
+## Building
 
 We have attempted to make `cabal install` work out of the box.  They
 have been tested on 64-bit Mac OS X with XCode, 32-bit and 64-bit CentOS
@@ -19,8 +20,7 @@ the 64-bit build is less well tested than the 32-bit build, so
 try a 32-bit build if you have trouble with the 64-bit build.
 
 
-ABC Sources
------------
+## ABC Sources
 
 The main task of the build system is to retrieve and build the ABC C
 sources before building the Haskell bridge.  We do this by downloading
@@ -40,7 +40,6 @@ Run "scripts/clean-abc.sh" if you want to remove all ABC source
 artifacts and force a redownload from the BitBucket project.
 
 
-Cutting a Hackage release
--------------------------
+## Cutting a Hackage release
 
 See README.releases for instructions.
