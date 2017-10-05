@@ -1,30 +1,34 @@
+dist: trusty
 sudo: false
+
 language: c
 
 cache:
   directories:
   - $HOME/.ghc
   - $HOME/.cabal
-  - $HOME/.stack
 
 matrix:
   include:
-    - compiler: ": #stack 8.0.2"
-      addons: {apt: {packages: [libgmp-dev]}}
-      env: STACK_URL="https://www.stackage.org/stack/linux-x86_64"
+    - env: CABALVER="2.0" GHCVER="8.2.1"
+      compiler: ": #GHC 8.2.1"
+      addons: {apt: {packages: [cabal-install-2.0,ghc-8.2.1], sources: [hvr-ghc]}}
     - os: osx
-      compiler: ": #stack 8.0.2"
-      env: STACK_URL="https://www.stackage.org/stack/osx-x86_64"
+      env: CABALVER="2.0" GHCVER="8.2.1"
+      compiler: ": #GHC 8.2.1"
 
 before_install:
+  - if [[ $TRAVIS_OS_NAME == 'osx' ]];
+    then
+        brew install ghc cabal-install z3;
+    fi
   - unset CC
-  - mkdir -p ~/.local/bin
-  - export PATH=$HOME/.local/bin:$PATH
-  - travis_retry curl -L ${STACK_URL} | tar xz
-  - mv stack-*/stack $HOME/.local/bin
+  - export PATH=/opt/ghc/bin:$HOME/.cabal/bin:$PATH
 
 script:
-  - stack setup
-  - stack install alex
-  - stack install happy
-  - stack test --no-terminal --skip-ghc-check --test-arguments="--xml=result.xml --quickcheck-tests=10000"
+  - cabal update
+  - cabal install -j alex
+  - cabal install -j happy
+  - cabal install -j c2hs
+  - cabal new-build
+  - cabal new-test
