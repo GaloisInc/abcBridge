@@ -4,9 +4,9 @@ platform:
 build: off
 
 install:
-  - set PATH=C:\Users\appveyor\AppData\Roaming\cabal\bin\;%PATH%;C:\msys64\usr\bin
-  - cmd: choco install ghc
-  - cmd: choco install cabal
+  - choco install -y ghc --version 8.2.1
+  - refreshenv
+  - set PATH=%APPDATA%\cabal\bin;C:\Program Files\Git\mingw64\bin;%PATH%
 
 environment:
   global:
