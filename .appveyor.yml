@@ -3,21 +3,21 @@ platform:
 
 build: off
 
-before_test:
-  - set PATH=C:\Users\appveyor\AppData\Roaming\local\bin\;%PATH%;C:\msys64\usr\bin
-  - curl -sS -ostack.zip -L --insecure http://www.stackage.org/stack/windows-x86_64
-  - 7z x stack.zip stack.exe
+install:
+  - set PATH=C:\Users\appveyor\AppData\Roaming\cabal\bin\;%PATH%;C:\msys64\usr\bin
+  - cmd: choco install ghc
+  - cmd: choco install cabal
 
-clone_folder: "c:\\stack"
 environment:
   global:
-    STACK_ROOT: "c:\\sr"
     MSYSTEM: MINGW64
 
+build_script:
+  - cabal update
+  - cabal install alex
+  - cabal install happy
+  - cabal install c2hs
+  - cabal new-build
+
 test_script:
-  - which tar
-  - tar --version
-  - stack setup > nul
-  - echo "" | stack install --no-terminal --jobs 1 alex
-  - echo "" | stack install --no-terminal --jobs 1 happy
-  - echo "" | stack test --no-terminal --jobs 1 --test-arguments="--xml=result.xml --quickcheck-tests=10000"
+  - cabal new-test
