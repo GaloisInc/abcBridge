@@ -6,7 +6,7 @@ build: off
 install:
   - choco install -y ghc --version 8.2.1
   - refreshenv
-  - set PATH=%APPDATA%\cabal\bin;C:\msys64\usr\bin;%PATH%
+  - set PATH=%APPDATA%\cabal\bin;C:\Program Files\Git\mingw64\bin;%PATH%;C:\msys64\usr\bin
 
 environment:
   global:
