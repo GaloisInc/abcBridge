@@ -1,6 +1,10 @@
 {-# LANGUAGE CPP #-}
 
+#if MIN_VERSION_Cabal(2,0,0)
+import Distribution.Simple hiding (showVersion)
+#else
 import Distribution.Simple
+#endif
 import Distribution.Simple.Setup
 import Distribution.Simple.Utils (rawSystemExit, rawSystemExitWithEnv, installOrdinaryFile,
         installExecutableFile, copyFileVerbose, createDirectoryIfMissingVerbose)
