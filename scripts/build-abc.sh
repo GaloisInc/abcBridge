@@ -40,7 +40,6 @@ case "$OS" in
            -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 \
            -DPTW32_STATIC_LIB \
            -UZLIB_DLL \
-           -lmsvcrt \
            -Wl,--undefined=___strtod,--wrap,strtod,--defsym,___wrap_strtod=___strtod" ;;
 
       "X86_64")
@@ -55,8 +54,7 @@ case "$OS" in
            -D_WIN64 \
            -UWIN32 \
            -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 \
-           -UZLIB_DLL \
-           -lmsvcrt" ;;
+           -UZLIB_DLL ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
     esac
     if [ ! -z "${NUMBER_OF_PROCESSORS:-}" ]; then
