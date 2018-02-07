@@ -11,6 +11,7 @@ install:
 environment:
   global:
     MSYSTEM: MINGW64
+    NUMBER_OF_PROCESSORS: 1
 
 build_script:
   - cabal update
