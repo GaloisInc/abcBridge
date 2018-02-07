@@ -4,9 +4,11 @@ platform:
 build: off
 
 install:
+  - %BASH% -lc "pacman -Suuy --noconfirm"
+  - %BASH% -lc "pacman -Suuy --noconfirm"
   - choco install -y ghc --version 8.2.2
   - refreshenv
-  - set PATH=%APPDATA%\cabal\bin;C:\Program Files\Git\mingw64\bin;%PATH%;C:\msys64\usr\bin
+  - set PATH=%APPDATA%\cabal\bin;C:\msys64\usr\bin;%PATH%
 
 environment:
   global:
