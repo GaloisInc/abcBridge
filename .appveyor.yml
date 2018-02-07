@@ -15,9 +15,6 @@ environment:
 
 build_script:
   - cabal update
-  - cabal install alex
-  - cabal install happy
-  - cabal install c2hs
   - cabal new-build
 
 test_script:
