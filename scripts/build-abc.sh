@@ -59,7 +59,7 @@ case "$OS" in
            -lmsvcrt" ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
     esac
-    if [ -nz "${NUMBER_OF_PROCESSORS:-}" ]; then
+    if [ ! -z "${NUMBER_OF_PROCESSORS:-}" ]; then
       NPROC="$NUMBER_OF_PROCESSORS"
     elif type -p nproc; then
       NPROC=$(nproc)
