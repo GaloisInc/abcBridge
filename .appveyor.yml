@@ -9,7 +9,7 @@ install:
   - set PATH=%APPDATA%\cabal\bin;C:\msys64\usr\bin;%PATH%;C:\Program Files\Git\mingw64\bin
   - pacman -Suuy --noconfirm
   - pacman -Suuy --noconfirm
-  - pacman -S unzip
+  - pacman --noconfirm -S unzip
 
 environment:
   global:
