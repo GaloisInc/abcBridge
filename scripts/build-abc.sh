@@ -54,7 +54,7 @@ case "$OS" in
            -D_WIN64 \
            -UWIN32 \
            -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 \
-           -UZLIB_DLL ;;
+           -UZLIB_DLL" ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
     esac
     if [ ! -z "${NUMBER_OF_PROCESSORS:-}" ]; then
