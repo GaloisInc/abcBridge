@@ -113,7 +113,7 @@ readAiger path = do
   unless b $ do
     fail $ "Data.ABC.GIA.readAiger: file does not exist"
   let skipStrash = False
-  bracketOnError (giaAigerRead path skipStrash False) giaManStop $ \p -> do
+  bracketOnError (giaAigerRead path False skipStrash False) giaManStop $ \p -> do
     rn <- getGiaManRegNum p
     when (rn /= 0) $ fail "Networks do not yet support latches."
 
