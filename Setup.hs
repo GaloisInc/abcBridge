@@ -8,6 +8,9 @@ import Distribution.Simple.LocalBuildInfo (
         LocalBuildInfo(..), InstallDirs(..), absoluteInstallDirs)
 import Distribution.PackageDescription (PackageDescription(..), GenericPackageDescription(..),
         HookedBuildInfo(..), BuildInfo(..), emptyBuildInfo,
+#if MIN_VERSION_Cabal(2,2,0)
+        lookupFlagAssignment,
+#endif
         updatePackageDescription, FlagAssignment(..))
 import Distribution.Verbosity (verbose, Verbosity(..))
 import Distribution.System (OS(..), Arch(..), Platform (..), buildOS, buildPlatform)
@@ -116,7 +119,11 @@ setupAbc verbosity pkg_desc = do
 -- Build the ABC library and put the files in the expected places
 buildAbc :: Verbosity -> FlagAssignment -> IO ()
 buildAbc verbosity fs = do
+#if MIN_VERSION_Cabal(2,2,0)
+    let pthreads = maybe "0" (\x -> if x then "1" else "0") $ lookupFlagAssignment (mkFlagName "enable-pthreads") fs
+#else
     let pthreads = maybe "0" (\x -> if x then "1" else "0") $ lookup (mkFlagName "enable-pthreads") fs
+#endif
     env <- getEnvironment
     rawSystemExitWithEnv verbosity "sh"
         (("scripts"</>"build-abc.sh") : (tail . words . show $ buildPlatform))
