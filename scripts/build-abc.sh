@@ -24,7 +24,7 @@ case "$OS" in
       "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4" ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
     esac
-    NPROC=$(sysctl -n hw.ncpu) ;;
+    NPROC=$(/usr/sbin/sysctl -n hw.ncpu) ;;
 
   "Windows")
     S="libabc.dll"
