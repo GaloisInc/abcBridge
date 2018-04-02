@@ -26,6 +26,7 @@ before_install:
   - export PATH=/opt/ghc/bin:$HOME/.cabal/bin:$PATH
 
 script:
+  - cp cabal.project.GHC841.freeze cabal.project.freeze
   - cabal update
   - cabal new-build -j
   - cabal new-test
