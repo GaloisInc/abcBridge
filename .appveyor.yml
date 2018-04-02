@@ -19,6 +19,7 @@ environment:
 
 build_script:
   - cabal update
+  - cp cabal.project.GHC841.freeze cabal.project.freeze
   - cabal new-build
 
 test_script:
