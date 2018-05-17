@@ -131,6 +131,7 @@ basic_tests proxy@(ABC.Proxy f) = f $
        ABC.Unsat{} -> return ()
        ABC.SatUnknown{} -> fail "falseLit is unknown"
 
+  {-
   , testCase "aiger_twice" $ do
       ABC.SomeGraph g <- ABC.newGraph proxy
 
@@ -146,7 +147,7 @@ basic_tests proxy@(ABC.Proxy f) = f $
       r <- ABC.and g x y
 
       ABC.writeAiger (path++"2") (ABC.Network g [r])
-
+  -}
   , testCase "aiger_eval" $ do
       ABC.SomeGraph g <- ABC.newGraph proxy
 

@@ -20,8 +20,8 @@ if [ -z "${PACKAGE_VERSION}" ]; then
     exit 1
   fi
 else
-  LOCAL_TARBALL="galois-abcBridge-${PACKAGE_VERSION}.zip"
-  SRC_TARBALL="https://bitbucket.org/rdockins/abc/get/${LOCAL_TARBALL}"
+  LOCAL_TARBALL="abcBridge-${PACKAGE_VERSION}.zip"
+  SRC_TARBALL="https://github.com/GaloisInc/abc/archive/${LOCAL_TARBALL}"
   SUCCESS=""
 
   # try at most twice to fetch sources...
@@ -30,34 +30,34 @@ else
       # If the ABC source is not already fetched, download the galois-abcBridge
       # branch of the ABC project and unpack it in the "abc-build" subdirectory
       if [ ! -d abc-build ]; then
-	  # Fetch the latest galois-abcBridge branch from BitBucket; use either curl or wget
-	  # depending on which is installed
-	  [ -e $LOCAL_TARBALL ] || curl -O $SRC_TARBALL || wget --no-check-certificate $SRC_TARBALL;
+          # Fetch the latest abc branch from GitHub; use either curl or wget
+          # depending on which is installed
+          [ -e $LOCAL_TARBALL ] || curl -L -O $SRC_TARBALL || wget --no-check-certificate $SRC_TARBALL;
 
-          rm -rf abc-build rdockins-abc-*;
+          rm -rf abc-build abc-abcBridge-${PACKAGE_VERSION};
           unzip $LOCAL_TARBALL;
-          mv rdockins-abc-* abc-build;
+          mv abc-abcBridge-${PACKAGE_VERSION} abc-build;
       fi
 
       # Interrogate the expected version number of the ABC sources
       if [ -e abc-build/galois-abcBridge.version ]; then
-	  ABC_VERSION=`cat abc-build/galois-abcBridge.version`
+          ABC_VERSION=`cat abc-build/galois-abcBridge.version`
       else
-	  ABC_VERSION="NONE"
+          ABC_VERSION="NONE"
       fi
 
       if [ "$ABC_VERSION" != "$PACKAGE_VERSION" ]; then
-	  echo ""
-	  echo "The ABC source version $ABC_VERSION does not match the abcBridge package version $PACKAGE_VERSION."
-	  echo ""
-	  echo "Attempting to clean up and fetch fresh sources..."
+          echo ""
+          echo "The ABC source version $ABC_VERSION does not match the abcBridge package version $PACKAGE_VERSION."
+          echo ""
+          echo "Attempting to clean up and fetch fresh sources..."
 
-	  rm -r abc-build     || true
-	  rm "$LOCAL_TARBALL" || true
+          rm -r abc-build     || true
+          rm "$LOCAL_TARBALL" || true
       else
-	  echo "ABC sources found"
-	  SUCCESS="success"
-	  break
+          echo "ABC sources found"
+          SUCCESS="success"
+          break
       fi
   done
 
