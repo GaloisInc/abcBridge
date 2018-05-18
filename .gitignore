@@ -23,5 +23,5 @@ abc/arch_flags
 .cabal-sandbox
 cabal.sandbox.config
 abc-build
-galois-abcBridge-*.tar.bz2
-galois-abcBridge-*.zip
+abcBridge-*.tar.bz2
+abcBridge-*.zip
