@@ -1,3 +1,3 @@
 #!/bin/sh
-rm -r abc-build
-rm galois-abcBridge*.tar.bz2
+rm -rf abc-build
+rm -f abcBridge*.tar.bz2 abcBridge*.zip
