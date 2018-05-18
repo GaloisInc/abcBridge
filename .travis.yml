@@ -1,7 +1,7 @@
 dist: trusty
 sudo: false
 
-language: cpp
+language: c
 
 cache:
   directories:
@@ -12,7 +12,14 @@ matrix:
   include:
     - env: CABALVER="2.2" GHCVER="8.4.2"
       compiler: ": #GHC 8.4.2"
-      addons: {apt: {packages: [cabal-install-2.2,ghc-8.4.2], sources: [hvr-ghc]}}
+      addons:
+        apt:
+          packages:
+          - cabal-install-2.2
+          - ghc-8.4.2
+          - libstdc++-4.8-dev
+          sources:
+          - hvr-ghc
     - os: osx
       env: CABALVER="2.2" GHCVER="8.4.2"
       compiler: ": #GHC 8.4.2"
