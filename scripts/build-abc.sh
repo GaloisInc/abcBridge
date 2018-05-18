@@ -11,8 +11,8 @@ case "$OS" in
   "Linux")
     S=""
     case "$ARCH" in
-      "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 -static-libgcc" ;;
-      "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4 -static-libgcc" ;;
+      "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 -static-libgcc -fno-use-cxa-atexit" ;;
+      "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4 -static-libgcc -fno-use-cxa-atexit" ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
     esac
     NPROC=$(nproc) ;;
@@ -20,8 +20,8 @@ case "$OS" in
   "OSX")
     S=""
     case "$ARCH" in
-      "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4" ;;
-      "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4" ;;
+      "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 -fno-use-cxa-atexit" ;;
+      "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4 -fno-use-cxa-atexit" ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
     esac
     NPROC=$(sysctl -n hw.ncpu) ;;
@@ -31,6 +31,7 @@ case "$OS" in
     case "$ARCH" in
       "I386")
         A="-m32 \
+           -fno-use-cxa-atexit \
            -DWIN32_NO_DLL \
            -DABC_NO_DYNAMIC_LINKING \
            -DLIN \
@@ -48,6 +49,7 @@ case "$OS" in
         # `abc-build/arch_flags.c`) on the Win64 machine. Note that
         # the `SIZEOF_LONG` differs from the Lin64 value.
         A="-m64 \
+           -fno-use-cxa-atexit \
            -DWIN32_NO_DLL \
            -DABC_NO_DYNAMIC_LINKING \
            -DNT64 \
