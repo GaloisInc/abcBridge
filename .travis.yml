@@ -17,7 +17,7 @@ matrix:
           packages:
           - cabal-install-2.2
           - ghc-8.4.2
-          - libstdc++-4.8-dev
+          - libc++-dev
           sources:
           - hvr-ghc
     - os: osx
