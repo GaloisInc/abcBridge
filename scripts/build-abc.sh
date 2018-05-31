@@ -11,8 +11,8 @@ case "$OS" in
   "Linux")
     S=""
     case "$ARCH" in
-      "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 -static-libgcc -fno-use-cxa-atexit" ;;
-      "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4 -static-libgcc -fno-use-cxa-atexit" ;;
+      "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 -static-libgcc" ;;
+      "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4 -static-libgcc" ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
     esac
     NPROC=$(nproc) ;;
@@ -20,8 +20,8 @@ case "$OS" in
   "OSX")
     S=""
     case "$ARCH" in
-      "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 -fno-use-cxa-atexit" ;;
-      "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4 -fno-use-cxa-atexit" ;;
+      "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4" ;;
+      "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4" ;;
       *) echo "Unknown architecture: $ARCH" ; exit 2 ;;
     esac
     NPROC=$(sysctl -n hw.ncpu) ;;
@@ -31,7 +31,6 @@ case "$OS" in
     case "$ARCH" in
       "I386")
         A="-m32 \
-           -fno-use-cxa-atexit \
            -DWIN32_NO_DLL \
            -DABC_NO_DYNAMIC_LINKING \
            -DLIN \
@@ -49,7 +48,6 @@ case "$OS" in
         # `abc-build/arch_flags.c`) on the Win64 machine. Note that
         # the `SIZEOF_LONG` differs from the Lin64 value.
         A="-m64 \
-           -fno-use-cxa-atexit \
            -DWIN32_NO_DLL \
            -DABC_NO_DYNAMIC_LINKING \
            -DNT64 \
@@ -70,10 +68,5 @@ case "$OS" in
   *) echo "Unknown OS: $OS" ; exit 2 ;;
 esac
 
-# Default to no pthreads
-if [ -z "$PTHREADS" ]; then
-  PTHREADS=0
-fi
-
 cd abc-build
-make -j$NPROC ARCHFLAGS="-DABC_LIB $A" REMOVE_DRECTVE="true" READLINE=0 PTHREADS="$PTHREADS" libabc.a $S
+make -j$NPROC ARCHFLAGS="-DABC_LIB $A" ABC_USE_NO_PTHREADS=1 ABC_USE_NO_READLINE=1 libabc.a $S
