@@ -36,7 +36,7 @@ module Data.ABC.GIA
     , AIG.LitView(..)
       -- * File IO
     , readAiger
-    , writeAigerWithLatches
+    , abcWriteAigerWithLatches
       -- * QBF
     , check_exists_forall
       -- * Re-exports
@@ -152,11 +152,11 @@ instance Tr.Traceable Lit where
 -- If the number of latches is denoted by "n", then the last n inputs and last n outputs
 -- are treated as the latch input and outputs respectively.  The other inputs and outputs
 -- represent primary inputs and outputs.
-writeAigerWithLatches :: FilePath
-                      -> AIG.Network Lit GIA
-                      -> Int -- ^ Number of latches.
-                      -> IO ()
-writeAigerWithLatches path ntk latchCount =
+abcWriteAigerWithLatches :: FilePath
+                        -> AIG.Network Lit GIA
+                        -> Int -- ^ Number of latches.
+                        -> IO ()
+abcWriteAigerWithLatches path ntk latchCount =
   withNetworkPtr ntk $ \p -> do
     flip finally (setGiaManRegNum p 0) $ do
       ci_num <- giaManCiNum p
@@ -199,6 +199,9 @@ instance AIG.IsAIG Lit GIA where
   writeAiger path g = do
     withNetworkPtr g $ \p -> do
       giaAigerWrite p path False False
+
+  writeAigerWithLatches path g n =
+    abcWriteAigerWithLatches path g n
 
   writeCNF ntk l f = do
     giaNetworkAsAIGMan (AIG.Network ntk [l]) $ \pMan -> do
