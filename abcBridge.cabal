@@ -106,7 +106,7 @@ library
   Build-depends:
     base == 4.*,
     base-compat >= 0.6.0,
-    aig >= 0.2.3,
+    aig >= 0.2.6,
     containers,
     directory,
     vector
