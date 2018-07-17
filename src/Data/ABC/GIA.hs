@@ -283,10 +283,10 @@ withTwoNetworkPtrs g1@(AIG.Network ntk1 _) g2@(AIG.Network ntk2 _) m =
 
 -- | Run computation with a Gia_Man_t containing the given network.
 withNetworkPtr :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
-withNetworkPtr = withNetworkPtr_Munge
+--withNetworkPtr = withNetworkPtr_Munge
 
 -- A safer alternative...
---withNetworkPtr = withNetworkPtr_Copy
+withNetworkPtr = withNetworkPtr_Copy
 
 
 -- This is a safer method for implementing withNetworkPtr; it copies the
