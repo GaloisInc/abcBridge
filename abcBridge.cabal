@@ -28,10 +28,6 @@ flag enable-pthreads
   Description: Turn on multithreading
   Default: True
 
-flag enable-hpc
-  Description: Collect HPC coverage information.
-  Default: False
-
 source-repository head
   type: git
   location: https://github.com/GaloisInc/abcBridge.git
@@ -71,7 +67,6 @@ library
                         MultiParamTypeClasses,
                         EmptyDataDecls
   Ghc-options:          -Wall -fno-ignore-asserts
-  Ghc-prof-options:     -auto-all -caf-all
 
   if flag(enable-pthreads) {
     Cc-options: -DABC_USE_PTHREADS
@@ -119,24 +114,13 @@ library
                         cbits/abcBridgeGiaDup.c
                         cbits/pthread_stubs.c
 
-  if flag(enable-hpc)
-    ghc-options: -fhpc -hpcdir .hpc
-
-
 test-suite abc-test
   type: exitcode-stdio-1.0
   hs-source-dirs: tests
 
-  ghc-options: -Wall
-  ghc-prof-options: -fprof-auto
-
-  if flag(enable-hpc)
-    ghc-options: -fhpc
+  ghc-options: -Wall -pgmlg++
 
   default-Language: Haskell98
-
-  if flag(enable-hpc)
-    ghc-options: -fhpc
 
   extra-libraries:      stdc++
 
@@ -163,7 +147,9 @@ test-suite abc-test
 
 Executable find-segfault
   hs-source-dirs: tests
-  ghc-options: -Wall
+
+  ghc-options: -Wall -pgmlg++
+  extra-libraries:      stdc++
 
   default-Language: Haskell2010
 
@@ -197,15 +183,10 @@ Executable long-test
   if !flag(enable-extra-tests)
      buildable: False
 
-  ghc-options: -Wall
-  ghc-prof-options: -fprof-auto
-
-  if flag(enable-hpc)
-    ghc-options: -fhpc
+  ghc-options: -Wall -pgmlg++
+  extra-libraries:      stdc++
 
   default-Language: Haskell98
-
-  extra-libraries:      stdc++
 
   main-is:
     long-test.hs
