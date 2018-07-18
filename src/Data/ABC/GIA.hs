@@ -113,7 +113,7 @@ readAiger path = do
   unless b $ do
     fail $ "Data.ABC.GIA.readAiger: file does not exist"
   let skipStrash = False
-  bracketOnError (giaAigerRead path skipStrash False) giaManStop $ \p -> do
+  bracketOnError (giaAigerRead path False skipStrash False) giaManStop $ \p -> do
     rn <- getGiaManRegNum p
     when (rn /= 0) $ fail "Networks do not yet support latches."
 
@@ -283,10 +283,10 @@ withTwoNetworkPtrs g1@(AIG.Network ntk1 _) g2@(AIG.Network ntk2 _) m =
 
 -- | Run computation with a Gia_Man_t containing the given network.
 withNetworkPtr :: AIG.Network Lit GIA -> (Gia_Man_t -> IO a) -> IO a
-withNetworkPtr = withNetworkPtr_Munge
+--withNetworkPtr = withNetworkPtr_Munge
 
 -- A safer alternative...
---withNetworkPtr = withNetworkPtr_Copy
+withNetworkPtr = withNetworkPtr_Copy
 
 
 -- This is a safer method for implementing withNetworkPtr; it copies the

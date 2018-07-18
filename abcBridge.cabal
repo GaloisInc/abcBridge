@@ -1,5 +1,5 @@
 Name:               abcBridge
-Version:            0.16
+Version:            0.17.1
 Synopsis:           Bindings for ABC, A System for Sequential
                     Synthesis and Verification
 Description:        Bindings for ABC focused on creating And-Inverter
@@ -101,6 +101,7 @@ library
     }
   }
   Include-dirs:         include
+  Extra-libraries:      c++
 
 
   Build-depends:
@@ -147,7 +148,7 @@ test-suite abc-test
     base == 4.*,
     base-compat >= 0.6.0,
     abcBridge,
-    aig,
+    aig >= 0.2.6,
     directory,
     vector,
 
@@ -175,7 +176,7 @@ Executable find-segfault
        base == 4.*,
        base-compat >= 0.6.0,
        abcBridge,
-       aig,
+       aig >= 0.2.6,
        directory,
        vector,
        random,

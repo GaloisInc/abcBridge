@@ -425,6 +425,7 @@ giaObjId p pObj = do
 -- giaAiger.c
 {#fun Gia_AigerRead as ^
     { `String' -- pFileName
+    , `Bool' -- fGiaSimple
     , `Bool' -- fSkipStrash
     , `Bool' -- fCheck (doesn't do anything)
     } -> `Gia_Man_t' id #}

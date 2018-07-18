@@ -32,7 +32,7 @@ module Data.ABC.Internal.CEC (
     , cecManPatStop
     , cecManPatPatCount
     , cecManPatPrintStats
-    , cecManSatSolve
+    , cecManSatSolveCSat
     ) where
 
 #include "gia.h"
@@ -158,7 +158,7 @@ foreign import ccall unsafe "Cec_ManCecSetDefaultParams"
 cecManPatPatCount :: Cec_ManPat_t -> IO CInt
 cecManPatPatCount = {#get Cec_ManPat_t->nPats#}
 
-{#fun Cec_ManSatSolve as ^
+{#fun Cec_ManSatSolveCSat as ^
     { `Cec_ManPat_t' -- pPat
     , id `Gia_Man_t' -- pAig
     , `Cec_ParSat_t' -- pPars

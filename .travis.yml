@@ -10,12 +10,19 @@ cache:
 
 matrix:
   include:
-    - env: CABALVER="2.2" GHCVER="8.4.1"
-      compiler: ": #GHC 8.4.1"
-      addons: {apt: {packages: [cabal-install-2.2,ghc-8.4.1], sources: [hvr-ghc]}}
+    - env: CABALVER="2.2" GHCVER="8.4.3"
+      compiler: ": #GHC 8.4.3"
+      addons:
+        apt:
+          packages:
+          - cabal-install-2.2
+          - ghc-8.4.3
+          - libc++-dev
+          sources:
+          - hvr-ghc
     - os: osx
-      env: CABALVER="2.2" GHCVER="8.4.1"
-      compiler: ": #GHC 8.4.1"
+      env: CABALVER="2.2" GHCVER="8.4.3"
+      compiler: ": #GHC 8.4.3"
 
 before_install:
   - if [[ $TRAVIS_OS_NAME == 'osx' ]];
@@ -26,7 +33,7 @@ before_install:
   - export PATH=/opt/ghc/bin:$HOME/.cabal/bin:$PATH
 
 script:
-  - cp cabal.project.GHC841.freeze cabal.project.freeze
+  - cp cabal.project.GHC843.freeze cabal.project.freeze
   - cabal update
   - cabal new-build -j
   - cabal new-test

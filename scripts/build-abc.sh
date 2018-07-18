@@ -9,7 +9,6 @@ OS="$2"
 # Select architecture- and OS-dependent compiler flags
 case "$OS" in
   "Linux")
-    S=""
     case "$ARCH" in
       "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4 -static-libgcc" ;;
       "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4 -static-libgcc" ;;
@@ -18,7 +17,6 @@ case "$OS" in
     NPROC=$(nproc) ;;
 
   "OSX")
-    S=""
     case "$ARCH" in
       "I386") A="-m32 -DLIN -DSIZEOF_VOID_P=4 -DSIZEOF_LONG=4 -DSIZEOF_INT=4" ;;
       "X86_64") A="-m64 -fPIC -DLIN64 -DSIZEOF_VOID_P=8 -DSIZEOF_LONG=8 -DSIZEOF_INT=4" ;;
@@ -27,7 +25,6 @@ case "$OS" in
     NPROC=$(sysctl -n hw.ncpu) ;;
 
   "Windows")
-    S="libabc.dll"
     case "$ARCH" in
       "I386")
         A="-m32 \
@@ -68,10 +65,5 @@ case "$OS" in
   *) echo "Unknown OS: $OS" ; exit 2 ;;
 esac
 
-# Default to no pthreads
-if [ -z "$PTHREADS" ]; then
-  PTHREADS=0
-fi
-
 cd abc-build
-make -j$NPROC ARCHFLAGS="-DABC_LIB $A" REMOVE_DRECTVE="true" READLINE=0 PTHREADS="$PTHREADS" libabc.a $S
+make -j$NPROC ARCHFLAGS="-DABC_LIB $A" ABC_USE_NO_PTHREADS=1 ABC_USE_NO_READLINE=1 libabc.a

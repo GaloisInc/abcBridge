@@ -130,7 +130,7 @@ buildAbc verbosity fs = do
         ([("PTHREADS",pthreads)] ++ filter ((/="PTHREADS") . fst) env)
     createDirectoryIfMissingVerbose verbosity True static_dir
     copyFileVerbose verbosity ("abc-build"</>"libabc.a") (static_dir</>"libabc.a")
-    onWindows $ copyFileVerbose verbosity ("abc-build"</>"libabc.dll") (static_dir</>"abc.dll")
+    --onWindows $ copyFileVerbose verbosity ("abc-build"</>"libabc.dll") (static_dir</>"abc.dll")
 
 -- Make sure the ABC libraries are installed in the appropriate places
 postInstAbc :: Args -> InstallFlags -> PackageDescription -> LocalBuildInfo -> IO ()
@@ -154,7 +154,7 @@ postCopyAbc _ flags pkg_descr lbi = do
         copy dest f = installOrdinaryFile verbosity (static_dir</>f) (dest</>f)
     createDirectoryIfMissingVerbose verbosity True binPref
     copy libPref "libabc.a"
-    onWindows $ copy libPref "abc.dll"
+    --onWindows $ copy libPref "abc.dll"
 
 #if !(MIN_VERSION_Cabal(2,0,0))
 mkFlagName :: String -> FlagName

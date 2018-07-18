@@ -20,7 +20,7 @@ module Data.ABC.Internal.Main (
     , abcStop
     ) where
 
-#include "main.h"
+#include "base/main/main.h"
 
 {#fun Abc_Start as ^ {} -> `()' #}
 {#fun Abc_Stop as ^ {} -> `()' #}
