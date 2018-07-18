@@ -6,9 +6,6 @@ set -e
 # trace execution
 set -x
 
-git submodule init
-git submodule update
-
 # Build a list of the files in the ABC subdirectory that we can feed into
 # the Cabal system so that "setup sdist" works correctly.  Use sed to filter out
 # compiled object files and libraries. Likewise, set up a list of directories

@@ -34,6 +34,8 @@ before_install:
 
 script:
   - cp cabal.project.GHC843.freeze cabal.project.freeze
+  - git submodule init
+  - git submodule update
   - cabal update
   - cabal new-build -j
   - cabal new-test
