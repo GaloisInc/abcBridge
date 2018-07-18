@@ -13,15 +13,8 @@ dist-newstyle
 *.dylib
 *.vcproj.*
 *.ps
-abc/abc
-abc/src/build
-abc/DebugLib
-abc/ReleaseLib
-abc/arch_flags
 *~
 *~
 .cabal-sandbox
 cabal.sandbox.config
-abc-build
-abcBridge-*.tar.bz2
-abcBridge-*.zip
+.stack-work

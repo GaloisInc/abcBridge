@@ -1,0 +1,3 @@
+[submodule "abc-build"]
+	path = abc-build
+	url = https://github.com/GaloisInc/abc.git

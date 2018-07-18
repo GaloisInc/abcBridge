@@ -6,68 +6,8 @@ set -e
 # trace execution
 set -x
 
-echo "Setting up ABC tree for abcBridge version ${PACKAGE_VERSION:-undefined}..."
-
-if [ -z "${PACKAGE_VERSION}" ]; then
-  if [ -d abc-build ]; then
-    echo ""
-    echo "Package version not defined; assuming compatible ABC sources are already present in directory abc-build"
-  else
-    echo ""
-    echo "Package version not defined.  Expected to find ABC sources in directory abc-build, but they are missing."
-    echo "Please manually check out or download ABC sources into directory 'abc-build'.  Alternately, execute 'cabal configure'"
-    echo "instead to automatically fetch the correct sources."
-    exit 1
-  fi
-else
-  LOCAL_TARBALL="abcBridge-${PACKAGE_VERSION}.zip"
-  SRC_TARBALL="https://github.com/GaloisInc/abc/archive/${LOCAL_TARBALL}"
-  SUCCESS=""
-
-  # try at most twice to fetch sources...
-  for i in "one" "two"
-  do
-      # If the ABC source is not already fetched, download the galois-abcBridge
-      # branch of the ABC project and unpack it in the "abc-build" subdirectory
-      if [ ! -d abc-build ]; then
-          # Fetch the latest abc branch from GitHub; use either curl or wget
-          # depending on which is installed
-          [ -e $LOCAL_TARBALL ] || curl -L -O $SRC_TARBALL || wget --no-check-certificate $SRC_TARBALL;
-
-          rm -rf abc-build abc-abcBridge-${PACKAGE_VERSION};
-          unzip $LOCAL_TARBALL;
-          mv abc-abcBridge-${PACKAGE_VERSION} abc-build;
-      fi
-
-      # Interrogate the expected version number of the ABC sources
-      if [ -e abc-build/galois-abcBridge.version ]; then
-          ABC_VERSION=`cat abc-build/galois-abcBridge.version`
-      else
-          ABC_VERSION="NONE"
-      fi
-
-      if [ "$ABC_VERSION" != "$PACKAGE_VERSION" ]; then
-          echo ""
-          echo "The ABC source version $ABC_VERSION does not match the abcBridge package version $PACKAGE_VERSION."
-          echo ""
-          echo "Attempting to clean up and fetch fresh sources..."
-
-          rm -r abc-build     || true
-          rm "$LOCAL_TARBALL" || true
-      else
-          echo "ABC sources found"
-          SUCCESS="success"
-          break
-      fi
-  done
-
-  if [ -z "${SUCCESS}" ]; then
-      echo ""
-      echo "Unable to fetch ABC sources. Giving up..."
-      exit 1
-  fi
-fi
-
+git submodule init
+git submodule update
 
 # Build a list of the files in the ABC subdirectory that we can feed into
 # the Cabal system so that "setup sdist" works correctly.  Use sed to filter out
