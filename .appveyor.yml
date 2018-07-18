@@ -4,7 +4,7 @@ platform:
 build: off
 
 install:
-  - choco install -y ghc --version 8.4.2
+  - choco install -y ghc --version 8.4.3
   - choco install -y cabal --version 2.2.0.0
   - refreshenv
   - set PATH=%APPDATA%\cabal\bin;C:\msys64\usr\bin;%PATH%;C:\Program Files\Git\mingw64\bin
@@ -19,7 +19,7 @@ environment:
 
 build_script:
   - cabal update
-  - cp cabal.project.GHC842.freeze cabal.project.freeze
+  - cp cabal.project.GHC843.freeze cabal.project.freeze
   - cabal new-build
 
 test_script:
