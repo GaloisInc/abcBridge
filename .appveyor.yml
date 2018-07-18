@@ -8,10 +8,7 @@ install:
   - choco install -y ghc --version 8.4.3
   - choco install -y cabal --version 2.2.0.0
   - refreshenv
-  - set PATH=%APPDATA%\cabal\bin;C:\msys64\usr\bin;C:\Program Files\Git\mingw64\bin
-  - pacman -Suuy --noconfirm
-  - pacman -Suuy --noconfirm
-  - pacman --noconfirm -S unzip
+  - set PATH=%APPDATA%\cabal\bin;%PATH%;C:\Program Files\Git\mingw64\bin
 
 environment:
   global:
