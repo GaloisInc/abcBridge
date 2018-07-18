@@ -101,7 +101,6 @@ library
     }
   }
   Include-dirs:         include
-  Extra-libraries:      c++
 
 
   Build-depends:
