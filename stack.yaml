@@ -2,5 +2,5 @@ packages:
   - .
 extra-deps:
   - clock-0.5.2
-  - aig-0.2.5
+  - aig-0.2.6
 resolver: lts-11.5

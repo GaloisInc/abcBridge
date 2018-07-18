@@ -107,7 +107,7 @@ library
   Build-depends:
     base == 4.*,
     base-compat >= 0.6.0,
-    aig >= 0.2.3,
+    aig >= 0.2.6,
     containers,
     directory,
     vector
@@ -148,7 +148,7 @@ test-suite abc-test
     base == 4.*,
     base-compat >= 0.6.0,
     abcBridge,
-    aig,
+    aig >= 0.2.6,
     directory,
     vector,
 
@@ -176,7 +176,7 @@ Executable find-segfault
        base == 4.*,
        base-compat >= 0.6.0,
        abcBridge,
-       aig,
+       aig >= 0.2.6,
        directory,
        vector,
        random,
