@@ -138,6 +138,8 @@ test-suite abc-test
   if flag(enable-hpc)
     ghc-options: -fhpc
 
+  extra-libraries:      stdc++
+
   other-modules:
     Tests.Basic
     Tests.Operations
@@ -202,6 +204,8 @@ Executable long-test
     ghc-options: -fhpc
 
   default-Language: Haskell98
+
+  extra-libraries:      stdc++
 
   main-is:
     long-test.hs
