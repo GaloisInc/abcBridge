@@ -36,8 +36,8 @@ import Distribution.PackageDescription (FlagName(..))
 -- to handle the ABC source tree.  We do this by editing, at runtime, the
 -- cabal package description to include the ABC sources files to `extra-source-files`
 -- (so `cabal sdist` works as expected), and to add the ABC source tree directories
--- to `include-dirs`.  This is done by reading the files `abc-build/abc-sources.txt`
--- and `abc-build/abc-incl-dirs.txt`, which are set up by `scripts/setup-abc.sh`.
+-- to `include-dirs`.  This is done by reading the files `scripts/abc-sources.txt`
+-- and `scripts/abc-incl-dirs.txt`, which are set up by `scripts/setup-abc.sh`.
 --
 -- Finally, we must also include some information about where do find the libabc.a
 -- and libabc.dll files.
@@ -82,8 +82,8 @@ static_dir = "dist"</>"build"
 abcPkgDesc :: PackageDescription -> IO PackageDescription
 abcPkgDesc pkg_desc = do
   cwd <- getCurrentDirectory
-  abcSrcFiles <- fmap lines $ readFile $ "abc-build" </> "abc-sources.txt"
-  abcInclDirs <- fmap lines $ readFile $ "abc-build" </> "abc-incl-dirs.txt"
+  abcSrcFiles <- fmap lines $ readFile $ "scripts" </> "abc-sources.txt"
+  abcInclDirs <- fmap lines $ readFile $ "scripts" </> "abc-incl-dirs.txt"
   let pg' = updatePackageDescription (libDirAbc cwd abcInclDirs) pkg_desc
   return pg'{ extraSrcFiles = extraSrcFiles pg' ++ abcSrcFiles
             }
