@@ -17,8 +17,9 @@ import Distribution.System (OS(..), Arch(..), Platform (..), buildOS, buildPlatf
 import qualified Distribution.Simple.Utils
 import System.Directory
 import System.FilePath
+import System.FilePath.Find (find, always, extension, fileName, fileType, FileType(..), (/=?), (&&?), (==?))
 import System.Environment( getEnvironment )
-import Control.Monad(when)
+import Control.Monad(when, unless, liftM)
 
 #if MIN_VERSION_Cabal(2,0,0)
 import Distribution.Version( Version, showVersion )
@@ -29,15 +30,15 @@ import Distribution.PackageDescription (FlagName(..))
 #endif
 
 -- Here we install custom hooks to deal with fetching and building the ABC
--- sources.  This mostly involves calling into the "scripts/setup-abc.sh"
--- and "scripts/build-abc.sh" scripts at the proper times.
+-- sources.  This mostly involves calling into the "scripts/build-abc.sh" script
+-- at the proper time.
 --
 -- The other thing we must do is automagically munge the cabal description
 -- to handle the ABC source tree.  We do this by editing, at runtime, the
 -- cabal package description to include the ABC sources files to `extra-source-files`
 -- (so `cabal sdist` works as expected), and to add the ABC source tree directories
 -- to `include-dirs`.  This is done by reading the files `scripts/abc-sources.txt`
--- and `scripts/abc-incl-dirs.txt`, which are set up by `scripts/setup-abc.sh`.
+-- and `scripts/abc-incl-dirs.txt`, which are set up by `setupAbc`.
 --
 -- Finally, we must also include some information about where do find the libabc.a
 -- and libabc.dll files.
@@ -112,9 +113,27 @@ setupAbc verbosity pkg_desc = do
     let version = pkgVersion $ package $ pkg_desc
     let packageVersion = "PACKAGE_VERSION"
     env <- getEnvironment
-    rawSystemExitWithEnv verbosity "sh"
-        ( ("scripts" </> "setup-abc.sh") : (tail . words . show $ buildPlatform))
-        ([(packageVersion, showVersion version)] ++ filter ((/=packageVersion) . fst) env)
+
+    -- Build abc-incl-dirs.txt
+    let inclDirs = "scripts" </> "abc-incl-dirs.txt"
+    doesFileExist inclDirs >>=
+      flip unless (do
+        dirs <- find always (fileType ==? Directory) ("abc-build" </> "src")
+        writeFile inclDirs (unlines dirs))
+
+    -- Build abc-sources.txt
+    let abcSources = "scripts" </> "abc-sources.txt"
+    doesFileExist abcSources >>=
+      flip unless (writeFile abcSources "")
+    let conj = foldl (\acc x -> x &&? acc) always -- AND together many predicates
+    let extNotIn = conj . map (extension /=?)
+    let isNotBinary = extNotIn [".hgignore", ".o", ".a", ".dll", ".lib"]
+    -- Recurse when ".hg" is not in the filename
+    -- Find all non-binary regular files
+    sources <- find (liftM (not . Distribution.Simple.Utils.isInfixOf ".hg") fileName)
+                    (isNotBinary &&? fileType ==? RegularFile)
+                    "abc-build"
+    writeFile "scripts/abc-sources.txt" (unlines sources)
 
 -- Build the ABC library and put the files in the expected places
 buildAbc :: Verbosity -> FlagAssignment -> IO ()
