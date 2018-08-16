@@ -25,7 +25,7 @@ try a 32-bit build if you have trouble with the 64-bit build.
 The main task of the build system is to retrieve and build the ABC C
 sources before building the Haskell bridge.  We do this by downloading
 the latest version of a branch of the ABC project from BitBucket.  See
-"scripts/setup-abc.sh" for the logic relating to this step, including
+["Setup.hs"](./Setup.hs) for the logic relating to this step, including
 the URL from which the sources are fetched.  If you run "cabal sdist",
 ABC sources will be fetched and unpacked, and then repacked into a
 combined source distribution with the Haskell code.  The resulting
