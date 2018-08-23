@@ -3,7 +3,8 @@
 import Distribution.Simple
 import Distribution.Simple.Setup
 import Distribution.Simple.Utils (rawSystemExit, rawSystemExitWithEnv, installOrdinaryFile,
-        installExecutableFile, copyFileVerbose, createDirectoryIfMissingVerbose)
+        installExecutableFile, copyFileVerbose, createDirectoryIfMissingVerbose,
+        getDirectoryContentsRecursive, ordNub, isInfixOf)
 import Distribution.Simple.LocalBuildInfo (
         LocalBuildInfo(..), InstallDirs(..), absoluteInstallDirs)
 import Distribution.PackageDescription (PackageDescription(..), GenericPackageDescription(..),
@@ -17,7 +18,6 @@ import Distribution.System (OS(..), Arch(..), Platform (..), buildOS, buildPlatf
 import qualified Distribution.Simple.Utils
 import System.Directory
 import System.FilePath
-import System.FilePath.Find (find, always, extension, fileName, fileType, FileType(..), (/=?), (&&?), (==?))
 import System.Environment( getEnvironment )
 import Control.Monad(when, unless, liftM)
 
@@ -114,26 +114,18 @@ setupAbc verbosity pkg_desc = do
     let packageVersion = "PACKAGE_VERSION"
     env <- getEnvironment
 
-    -- Build abc-incl-dirs.txt
-    let inclDirs = "scripts" </> "abc-incl-dirs.txt"
-    doesFileExist inclDirs >>=
-      flip unless (do
-        dirs <- find always (fileType ==? Directory) ("abc-build" </> "src")
-        writeFile inclDirs (unlines dirs))
+    allSrcFiles <- getDirectoryContentsRecursive $ "abc-build" </> "src"
 
-    -- Build abc-sources.txt
-    let abcSources = "scripts" </> "abc-sources.txt"
-    doesFileExist abcSources >>=
-      flip unless (writeFile abcSources "")
-    let conj = foldl (\acc x -> x &&? acc) always -- AND together many predicates
-    let extNotIn = conj . map (extension /=?)
-    let isNotBinary = extNotIn [".hgignore", ".o", ".a", ".dll", ".lib"]
-    -- Recurse when ".hg" is not in the filename
-    -- Find all non-binary regular files
-    sources <- find (liftM (not . Distribution.Simple.Utils.isInfixOf ".hg") fileName)
-                    (isNotBinary &&? fileType ==? RegularFile)
-                    "abc-build"
-    writeFile "scripts/abc-sources.txt" (unlines sources)
+    let isIncl = (==) ".h" . takeExtension
+        inclDirs = ordNub . map takeDirectory . filter isIncl
+
+    let isVCSDir d = any (\v -> isInfixOf v d) [ ".hg", ".git" ]
+        isBinary f = takeExtension f `elem` [".hgignore", ".o", ".a", ".dll", ".lib"]
+        sources = filter (not . isBinary) . filter (not . isVCSDir)
+
+    writeFile ("scripts" </> "abc-incl-dirs.txt") $ unlines $ inclDirs allSrcFiles
+    writeFile ("scripts" </> "abc-sources.txt") $ unlines $ sources allSrcFiles
+
 
 -- Build the ABC library and put the files in the expected places
 buildAbc :: Verbosity -> FlagAssignment -> IO ()

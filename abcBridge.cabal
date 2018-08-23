@@ -36,7 +36,6 @@ custom-setup
   setup-depends: base
                , directory
                , filepath
-               , filemanip
                , Cabal
 
 library
