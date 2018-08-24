@@ -96,8 +96,6 @@ main = defaultMainWithHooks simpleUserHooks
                     setupAbc v pkg_desc
                     pkg_desc' <- abcPkgDesc pkg_desc
                     sDistHook simpleUserHooks pkg_desc' lbi h f
-
-    -- , postCopy = postCopyAbc
     }
 
 -- This is where we stash the static compiled ABC libraries
@@ -223,21 +221,6 @@ buildAbc verbosity fs = getABCLib >>= \case
     --onWindows $ copyFileVerbose verbosity ("abc-build"</>"libabc.dll") (static_dir</>"abc.dll")
   _ -> return ()  -- nothing to do when supplied by the system.
 
-{-
-postCopyAbc :: Args -> CopyFlags -> PackageDescription -> LocalBuildInfo -> IO ()
-postCopyAbc _ flags pkg_descr lbi = do
-    let installDirs = absoluteInstallDirs pkg_descr lbi
-                . fromFlag . copyDest
-                $ flags
-        libPref = libdir installDirs
-        binPref = bindir installDirs
-        verbosity = fromFlag $ copyVerbosity flags
-        outDir  = libPref
-        copy dest f = installOrdinaryFile verbosity (static_dir</>f) (dest</>f)
-    createDirectoryIfMissingVerbose verbosity True binPref
-    copy libPref "libabc.a"
-    --onWindows $ copy libPref "abc.dll"
--}
 
 #if !(MIN_VERSION_Cabal(2,0,0))
 mkFlagName :: String -> FlagName
