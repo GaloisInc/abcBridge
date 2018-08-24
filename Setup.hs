@@ -5,7 +5,7 @@ import Distribution.Simple
 import Distribution.Simple.Setup
 import Distribution.Simple.Utils (rawSystemExit, rawSystemExitWithEnv, installOrdinaryFile,
         installExecutableFile, copyFileVerbose, createDirectoryIfMissingVerbose,
-        getDirectoryContentsRecursive, ordNub, isInfixOf)
+        getDirectoryContentsRecursive, ordNub, isInfixOf, intercalate)
 import Distribution.Simple.LocalBuildInfo (
         LocalBuildInfo(..), InstallDirs(..), absoluteInstallDirs)
 import Distribution.PackageDescription (PackageDescription(..), GenericPackageDescription(..),
@@ -98,6 +98,14 @@ main = defaultMainWithHooks simpleUserHooks
 -- This is where we stash the static compiled ABC libraries
 static_dir = "dist"</>"build"
 
+-- Determine which libabc should be used:
+--  1. If there are sources available in the abc-build subdirectory,
+--     use (and build) those.
+--  2. If there is a LIBABC environment variable setting, expect that
+--     to point to a (previously built) source tree
+--  3. Look for the header files and library via the standard
+--     compilation settings locations (including a Nix shell).
+
 data ABCLib = LocalABC FilePath FilePath
             | SystemABC FilePath FilePath
 
@@ -110,20 +118,29 @@ getABCLib = do
                     in doesFileExist f >>= \e -> return (if e then Just f else Nothing)
       noABCError w = error ("ABC library must be checked out as a submodule" ++
                             " or installed in the system (" ++ w ++ ").")
+      envVals env = intercalate " " . concatMap (\v -> maybeToList $ lookup v env)
   lclsrcExists <- doesDirectoryExist lclsrc
   if lclsrcExists
     then return $ LocalABC lclsrc ("abc-build"</>libname)
     else do env <- getEnvironment
-            case (lookup "NIX_CFLAGS_COMPILE" env, lookup "NIX_LDFLAGS" env) of
-              (Just cflags, Just ldflags) ->
-                do abcInclDir <- ordNub <$> filterM hasABCincl (words cflags)
-                   abcLibDir <- ordNub . catMaybes <$> mapM chkABClib (words ldflags)
-                   case (abcInclDir, abcLibDir) of
-                     (i:[],l:[]) -> return $ SystemABC i $ l </> libname
-                     ([],_) -> noABCError "a"
-                     (_,[]) -> noABCError "b"
-                     _ -> error $ "Multiple ABC include locations found: " ++ show abcInclDir
-              _ -> noABCError "c"
+            let ilocs = concat [ map inclSub libabcenv
+                                , words $ envVals env ["CFLAGS", "NIX_CFLAGS_COMPILE"]
+                                , [ "/usr/include/abc" ]
+                                ]
+                llocs = concat [ map libSub libabcenv
+                               , words $ envVals env ["LDFLAGS", "NIX_LDFLAGS"]
+                               , [ "/usr/lib" ]
+                               ]
+                libabcenv = maybeToList $ lookup "LIBABC" env
+                inclSub p = p </> "src"
+                libSub = id
+            abcInclDir <- ordNub <$> filterM hasABCincl ilocs
+            abcLibDir <- ordNub . catMaybes <$> mapM chkABClib llocs
+            case (abcInclDir, abcLibDir) of
+              (i:[],l:[]) -> return $ SystemABC i $ l </> libname
+              ([],_) -> noABCError "incl"
+              (_,[]) -> noABCError "lib"
+              _ -> error $ "Multiple ABC include locations found: " ++ show abcInclDir
 
 
 -- Edit the package description to include the ABC source files,
