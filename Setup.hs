@@ -3,11 +3,10 @@
 
 import Distribution.Simple
 import Distribution.Simple.Setup
-import Distribution.Simple.Utils (rawSystemExit, rawSystemExitWithEnv, installOrdinaryFile,
-        installExecutableFile, copyFileVerbose, createDirectoryIfMissingVerbose,
-        getDirectoryContentsRecursive, ordNub, isInfixOf, intercalate)
-import Distribution.Simple.LocalBuildInfo (
-        LocalBuildInfo(..), InstallDirs(..), absoluteInstallDirs)
+import Distribution.Simple.Utils ( rawSystemExit, rawSystemExitWithEnv
+                                 , getDirectoryContentsRecursive
+                                 , ordNub, isInfixOf, intercalate )
+import Distribution.Simple.LocalBuildInfo ( LocalBuildInfo(..), InstallDirs(..) )
 import Distribution.PackageDescription (PackageDescription(..), GenericPackageDescription(..),
         HookedBuildInfo(..), BuildInfo(..), emptyBuildInfo,
 #if MIN_VERSION_Cabal(2,2,0)
@@ -97,9 +96,6 @@ main = defaultMainWithHooks simpleUserHooks
                     pkg_desc' <- abcPkgDesc pkg_desc
                     sDistHook simpleUserHooks pkg_desc' lbi h f
     }
-
--- This is where we stash the static compiled ABC libraries
-static_dir = "dist"</>"build"
 
 -- Determine which libabc should be used:
 --  1. If there are sources available in the abc-build subdirectory,
@@ -216,9 +212,6 @@ buildAbc verbosity fs = getABCLib >>= \case
     rawSystemExitWithEnv verbosity "sh"
         (("scripts"</>"build-abc.sh") : (tail . words . show $ buildPlatform))
         ([("PTHREADS",pthreads)] ++ filter ((/="PTHREADS") . fst) env)
-    createDirectoryIfMissingVerbose verbosity True static_dir
-    copyFileVerbose verbosity ("abc-build"</>"libabc.a") (static_dir</>"libabc.a")
-    --onWindows $ copyFileVerbose verbosity ("abc-build"</>"libabc.dll") (static_dir</>"abc.dll")
   _ -> return ()  -- nothing to do when supplied by the system.
 
 
