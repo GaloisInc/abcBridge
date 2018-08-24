@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE LambdaCase #-}
 
 import Distribution.Simple
 import Distribution.Simple.Setup
@@ -19,7 +20,8 @@ import qualified Distribution.Simple.Utils
 import System.Directory
 import System.FilePath
 import System.Environment( getEnvironment )
-import Control.Monad(when, unless, liftM)
+import Control.Monad ( filterM )
+import Data.Maybe
 
 #if MIN_VERSION_Cabal(2,0,0)
 import Distribution.Version( Version, showVersion )
@@ -29,26 +31,45 @@ import Data.Version( Version, showVersion )
 import Distribution.PackageDescription (FlagName(..))
 #endif
 
--- Here we install custom hooks to deal with fetching and building the ABC
--- sources.  This mostly involves calling into the "scripts/build-abc.sh" script
--- at the proper time.
+-- The abcBridge depends on the ABC library itself.  The ABC library can be
+-- provided in two ways:
 --
--- The other thing we must do is automagically munge the cabal description
--- to handle the ABC source tree.  We do this by editing, at runtime, the
--- cabal package description to include the ABC sources files to `extra-source-files`
--- (so `cabal sdist` works as expected), and to add the ABC source tree directories
--- to `include-dirs`.  This is done by reading the files `scripts/abc-sources.txt`
--- and `scripts/abc-incl-dirs.txt`, which are set up by `setupAbc`.
+--    1. In the local abc-build subdirectory (usually populated via
+--       git submodules)
 --
--- Finally, we must also include some information about where do find the libabc.a
--- and libabc.dll files.
+--    2. It can already be present (e.g. as installed by system
+--       package management).
 --
--- We do this by modifying the configure hook so it modifies the package description
--- read from disk before returing the local build info that is used by other cabal actions.
--- However, we also have to modify the sDistHook because it reads from the package description
--- file directly rather than using the one from the confHook.  The 'clean' action likewise reads
--- the description file directly, but it causes no problems to use the unmodified package
--- description for the clean action, so we do not modify that hook.
+-- This non-standard Setup will attempt to identify which of these
+-- locations the ABC library can be obtained from, and prepares the
+-- abcBridge build to utilize the include files and libabc.a file from
+-- that location.  If the location is a local subdirectory, the cabal
+-- configure will also build the libabc.a in that subdirectory (via
+-- calling into the "scripts/build-abc.sh" script at the proper time).
+--
+-- This Setup will also dynamically modify the cabal package
+-- description to include the ABC source files in the
+-- `extra-source-files` specification (so `cabal sdist` works as
+-- expected), and to add the ABC source tree directories to
+-- `include-dirs`.  This is done by reading the files
+-- `scripts/abc-sources.txt` and `scripts/abc-incl-dirs.txt`, which
+-- are set up by `setupAbc` during `cabal configure`.
+--
+-- Finally, this Setup will also provide some information about where
+-- to find the libabc.a and libabc.dll files.
+--
+-- The setup achieves all of this by the following:
+--
+--   * Using a configure hook to modify the package description read
+--     from disk before returning the local build info that is used by
+--     other cabal actions.
+--
+--   * Note that the sDistHook (postCopy) is not modified: the sdist
+--     should not contain any libabc sources; those can be distributed
+--     separately.
+--
+--   * The 'clean' action will also perform a clean of the local copy
+--     of libabc.
 
 main = defaultMainWithHooks simpleUserHooks
     {  confHook = \(gpkg_desc, hbi) f -> do
@@ -71,29 +92,58 @@ main = defaultMainWithHooks simpleUserHooks
                     pkg_desc' <- abcPkgDesc pkg_desc
                     sDistHook simpleUserHooks pkg_desc' lbi h f
 
-    , postCopy = postCopyAbc
-    , postInst = postInstAbc
+    -- , postCopy = postCopyAbc
     }
 
 -- This is where we stash the static compiled ABC libraries
 static_dir = "dist"</>"build"
 
+data ABCLib = LocalABC FilePath FilePath
+            | SystemABC FilePath FilePath
+
+getABCLib :: IO ABCLib
+getABCLib = do
+  let lclsrc = "abc-build" </> "src"
+      libname = "libabc.a"
+      hasABCincl p = doesFileExist $ p </> "base" </> "abc" </> "abc.h"
+      chkABClib p = let f = (if take 2 p == "-L" then drop 2 p else p) </> libname
+                    in doesFileExist f >>= \e -> return (if e then Just f else Nothing)
+      noABCError w = error ("ABC library must be checked out as a submodule" ++
+                            " or installed in the system (" ++ w ++ ").")
+  lclsrcExists <- doesDirectoryExist lclsrc
+  if lclsrcExists
+    then return $ LocalABC lclsrc ("abc-build"</>libname)
+    else do env <- getEnvironment
+            case (lookup "NIX_CFLAGS_COMPILE" env, lookup "NIX_LDFLAGS" env) of
+              (Just cflags, Just ldflags) ->
+                do abcInclDir <- ordNub <$> filterM hasABCincl (words cflags)
+                   abcLibDir <- ordNub . catMaybes <$> mapM chkABClib (words ldflags)
+                   case (abcInclDir, abcLibDir) of
+                     (i:[],l:[]) -> return $ SystemABC i $ l </> libname
+                     ([],_) -> noABCError "a"
+                     (_,[]) -> noABCError "b"
+                     _ -> error $ "Multiple ABC include locations found: " ++ show abcInclDir
+              _ -> noABCError "c"
+
+
 -- Edit the package description to include the ABC source files,
 -- ABC include directories, and static library directories.
 abcPkgDesc :: PackageDescription -> IO PackageDescription
 abcPkgDesc pkg_desc = do
-  cwd <- getCurrentDirectory
+  -- Note: assumes the script files have previously been built by setupAbc
   abcSrcFiles <- fmap lines $ readFile $ "scripts" </> "abc-sources.txt"
   abcInclDirs <- fmap lines $ readFile $ "scripts" </> "abc-incl-dirs.txt"
-  let pg' = updatePackageDescription (libDirAbc cwd abcInclDirs) pkg_desc
-  return pg'{ extraSrcFiles = extraSrcFiles pg' ++ abcSrcFiles
-            }
+  (p,mkBI) <- getABCLib >>= \case
+          LocalABC _ lib -> return (pkg_desc, libDirAbc lib)
+          SystemABC _ lib -> let fullsrc = extraSrcFiles pkg_desc ++ abcSrcFiles
+                                   in return (pkg_desc { extraSrcFiles = fullsrc }, libDirAbc lib)
+  return $ updatePackageDescription (mkBI abcInclDirs) p
 
 libDirAbc :: FilePath -> [FilePath] -> HookedBuildInfo
-libDirAbc cwd abcInclDirs = (Just buildinfo, [])
+libDirAbc libdir abcInclDirs = (Just buildinfo, [])
     where buildinfo = emptyBuildInfo
                       { includeDirs = abcInclDirs
-                      , extraLibDirs = [cwd </> static_dir]
+                      , extraLibDirs = [libdir]
                       }
 
 onWindows :: Monad m => m () -> m ()
@@ -112,9 +162,13 @@ setupAbc verbosity pkg_desc = do
     putStrLn $ unwords ["Cabal library version:", showVersion Distribution.Simple.Utils.cabalVersion]
     let version = pkgVersion $ package $ pkg_desc
     let packageVersion = "PACKAGE_VERSION"
-    env <- getEnvironment
 
-    allSrcFiles <- getDirectoryContentsRecursive $ "abc-build" </> "src"
+    abcSrcRoot <- getABCLib >>= \case
+      LocalABC incl _ -> return incl
+      SystemABC incl _ -> return incl
+
+    allSrcFiles <- let fullpath i = abcSrcRoot </> i
+                   in map fullpath <$> getDirectoryContentsRecursive abcSrcRoot
 
     let isIncl = (==) ".h" . takeExtension
         inclDirs = ordNub . map takeDirectory . filter isIncl
@@ -129,7 +183,8 @@ setupAbc verbosity pkg_desc = do
 
 -- Build the ABC library and put the files in the expected places
 buildAbc :: Verbosity -> FlagAssignment -> IO ()
-buildAbc verbosity fs = do
+buildAbc verbosity fs = getABCLib >>= \case
+  LocalABC _ _ -> do
 #if MIN_VERSION_Cabal(2,2,0)
     let pthreads = maybe "0" (\x -> if x then "1" else "0") $ lookupFlagAssignment (mkFlagName "enable-pthreads") fs
 #else
@@ -142,17 +197,9 @@ buildAbc verbosity fs = do
     createDirectoryIfMissingVerbose verbosity True static_dir
     copyFileVerbose verbosity ("abc-build"</>"libabc.a") (static_dir</>"libabc.a")
     --onWindows $ copyFileVerbose verbosity ("abc-build"</>"libabc.dll") (static_dir</>"abc.dll")
+  _ -> return ()  -- nothing to do when supplied by the system.
 
--- Make sure the ABC libraries are installed in the appropriate places
-postInstAbc :: Args -> InstallFlags -> PackageDescription -> LocalBuildInfo -> IO ()
-postInstAbc _ flags pkg_descr lbi = do
-    let copyflags = defaultCopyFlags {
-                          copyDistPref  = installDistPref flags
-                        , copyDest      = toFlag NoCopyDest
-                        , copyVerbosity = installVerbosity flags
-                        }
-    postCopyAbc undefined copyflags pkg_descr lbi
-
+{-
 postCopyAbc :: Args -> CopyFlags -> PackageDescription -> LocalBuildInfo -> IO ()
 postCopyAbc _ flags pkg_descr lbi = do
     let installDirs = absoluteInstallDirs pkg_descr lbi
@@ -166,6 +213,7 @@ postCopyAbc _ flags pkg_descr lbi = do
     createDirectoryIfMissingVerbose verbosity True binPref
     copy libPref "libabc.a"
     --onWindows $ copy libPref "abc.dll"
+-}
 
 #if !(MIN_VERSION_Cabal(2,0,0))
 mkFlagName :: String -> FlagName
