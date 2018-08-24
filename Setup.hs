@@ -76,10 +76,15 @@ main = defaultMainWithHooks simpleUserHooks
                     let v = fromFlag $ configVerbosity f
                     let fs = configConfigurationsFlags f
                     setupAbc v (packageDescription gpkg_desc)
-                    buildAbc v fs
                     lbi <- confHook simpleUserHooks (gpkg_desc, hbi) f
                     pkg_desc' <- abcPkgDesc (localPkgDescr lbi)
                     return lbi{ localPkgDescr = pkg_desc' }
+
+    , buildHook = \pkg_desc bi uh bf -> do
+                    let v = fromFlag $ buildVerbosity bf
+                        f = flagAssignment bi
+                    buildAbc v f
+                    buildHook simpleUserHooks pkg_desc bi uh bf
 
     , cleanHook = \pkg_desc unit uh cf -> do
                     let v = fromFlag $ cleanVerbosity cf
