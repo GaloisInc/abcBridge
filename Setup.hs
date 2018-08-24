@@ -164,8 +164,10 @@ setupAbc verbosity pkg_desc = do
     let packageVersion = "PACKAGE_VERSION"
 
     abcSrcRoot <- getABCLib >>= \case
-      LocalABC incl _ -> return incl
-      SystemABC incl _ -> return incl
+      LocalABC incl _ -> do putStrLn "Using libabc [to be built] in abc-build"
+                            return incl
+      SystemABC incl lib -> do putStrLn $ "Using libabc in " ++ show lib
+                               return incl
 
     allSrcFiles <- let fullpath i = abcSrcRoot </> i
                    in map fullpath <$> getDirectoryContentsRecursive abcSrcRoot
