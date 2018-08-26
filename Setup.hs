@@ -75,15 +75,21 @@ main = defaultMainWithHooks simpleUserHooks
                     let v = fromFlag $ configVerbosity f
                     let fs = configConfigurationsFlags f
                     setupAbc v (packageDescription gpkg_desc)
+                    -- Note: it is unusual to perform the build of the
+                    -- dependency during the configure phase instead
+                    -- of the build phase, but setup requires that all
+                    -- dependencies are present and accessible.
+                    buildAbc v fs
                     lbi <- confHook simpleUserHooks (gpkg_desc, hbi) f
                     pkg_desc' <- abcPkgDesc (localPkgDescr lbi)
                     return lbi{ localPkgDescr = pkg_desc' }
 
-    , buildHook = \pkg_desc bi uh bf -> do
-                    let v = fromFlag $ buildVerbosity bf
-                        f = flagAssignment bi
-                    buildAbc v f
-                    buildHook simpleUserHooks pkg_desc bi uh bf
+    -- See note above re building abc during the setup phase.
+    -- , buildHook = \pkg_desc bi uh bf -> do
+    --                 let v = fromFlag $ buildVerbosity bf
+    --                     f = flagAssignment bi
+    --                 buildAbc v f
+    --                 buildHook simpleUserHooks pkg_desc bi uh bf
 
     , cleanHook = \pkg_desc unit uh cf -> do
                     let v = fromFlag $ cleanVerbosity cf
