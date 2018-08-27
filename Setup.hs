@@ -143,7 +143,7 @@ getABCLib = do
             abcInclDir <- ordNub <$> filterM hasABCincl ilocs
             abcLibDir <- ordNub . catMaybes <$> mapM chkABClib llocs
             case (abcInclDir, abcLibDir) of
-              (i:[],l:[]) -> return $ SystemABC i $ l </> libname
+              (i:[],l:[]) -> return $ SystemABC i $ takeDirectory l
               ([],_) -> noABCError "incl"
               (_,[]) -> noABCError "lib"
               _ -> error $ "Multiple ABC include locations found: " ++ show abcInclDir
