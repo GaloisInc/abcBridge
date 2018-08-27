@@ -126,7 +126,8 @@ getABCLib = do
       envVals env = intercalate " " . concatMap (\v -> maybeToList $ lookup v env)
   lclsrcExists <- doesDirectoryExist lclsrc
   if lclsrcExists
-    then return $ LocalABC lclsrc ("abc-build"</>libname)
+    then do here <- getCurrentDirectory
+            return $ LocalABC lclsrc $ here </> "abc-build"
     else do env <- getEnvironment
             let ilocs = concat [ map inclSub libabcenv
                                 , words $ envVals env ["CFLAGS", "NIX_CFLAGS_COMPILE"]
