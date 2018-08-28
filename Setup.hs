@@ -21,6 +21,7 @@ import System.FilePath
 import System.Environment( getEnvironment )
 import Control.Monad ( filterM )
 import Data.Maybe
+import qualified Data.List as L
 
 #if MIN_VERSION_Cabal(2,0,0)
 import Distribution.Version( Version, showVersion )
@@ -202,8 +203,20 @@ setupAbc verbosity pkg_desc = do
         isBinary f = takeExtension f `elem` [".hgignore", ".o", ".a", ".dll", ".lib"]
         sources = filter (not . isBinary) . filter (not . isVCSDir)
 
-    writeFile ("scripts" </> "abc-incl-dirs.txt") $ unlines $ inclDirs allSrcFiles
+    -- n.b. sort the inclDirs because their order determines the
+    -- search order for include files.  In particular, when building
+    -- on a case-insensitive filesystem (I'm looking at you, Windows),
+    -- src/Data/ABC/Internal/VecInt.hs has an `include "vec.h"` which
+    -- should match against `src/misc/vec/vec.h` and not
+    -- `src/sat/glucose/Vec.h` or `src/sat/bsat2/Vec.h`.
+
+    writeFile ("scripts" </> "abc-incl-dirs.txt") $ unlines $ L.sort $ inclDirs allSrcFiles
     writeFile ("scripts" </> "abc-sources.txt") $ unlines $ sources allSrcFiles
+
+    putStrLn ""
+    putStrLn $ "Original incldirs: " ++ (unlines $ inclDirs allSrcFiles)
+    putStrLn ""
+    putStrLn $ "Sorted incldirs: " ++ (unlines $ L.sort $ inclDirs allSrcFiles)
 
 
 -- Build the ABC library and put the files in the expected places
