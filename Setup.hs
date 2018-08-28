@@ -213,11 +213,6 @@ setupAbc verbosity pkg_desc = do
     writeFile ("scripts" </> "abc-incl-dirs.txt") $ unlines $ L.sort $ inclDirs allSrcFiles
     writeFile ("scripts" </> "abc-sources.txt") $ unlines $ sources allSrcFiles
 
-    putStrLn ""
-    putStrLn $ "Original incldirs: " ++ (unlines $ inclDirs allSrcFiles)
-    putStrLn ""
-    putStrLn $ "Sorted incldirs: " ++ (unlines $ L.sort $ inclDirs allSrcFiles)
-
 
 -- Build the ABC library and put the files in the expected places
 buildAbc :: Verbosity -> FlagAssignment -> IO ()
