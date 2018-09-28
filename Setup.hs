@@ -23,12 +23,19 @@ import Control.Monad ( filterM )
 import Data.Maybe
 import qualified Data.List as L
 
-#if MIN_VERSION_Cabal(2,0,0)
-import Distribution.Version( Version, showVersion )
+#if MIN_VERSION_Cabal(2,2,0)
+import Distribution.Version( Version )
 import Distribution.PackageDescription (mkFlagName)
 import Distribution.Pretty ( prettyShow )
 
 vshow = prettyShow
+
+#elif MIN_VERSION_Cabal(2,0,0)
+import Distribution.Version( Version, showVersion )
+import Distribution.PackageDescription (mkFlagName)
+import Distribution.Pretty ( prettyShow )
+
+vshow = showVersion
 #else
 import Data.Version( Version, showVersion )
 import Distribution.PackageDescription (FlagName(..))
