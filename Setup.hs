@@ -33,7 +33,6 @@ vshow = prettyShow
 #elif MIN_VERSION_Cabal(2,0,0)
 import Distribution.Version( Version, showVersion )
 import Distribution.PackageDescription (mkFlagName)
-import Distribution.Pretty ( prettyShow )
 
 vshow = showVersion
 #else
