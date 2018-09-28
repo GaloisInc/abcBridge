@@ -26,9 +26,14 @@ import qualified Data.List as L
 #if MIN_VERSION_Cabal(2,0,0)
 import Distribution.Version( Version, showVersion )
 import Distribution.PackageDescription (mkFlagName)
+import Distribution.Pretty ( prettyShow )
+
+vshow = prettyShow
 #else
 import Data.Version( Version, showVersion )
 import Distribution.PackageDescription (FlagName(..))
+
+vshow = showVersion
 #endif
 
 -- The abcBridge depends on the ABC library itself.  The ABC library can be
@@ -183,7 +188,7 @@ cleanAbc verbosity = do
 -- If necessary, fetch the ABC sources and prepare for building
 setupAbc :: Verbosity -> PackageDescription -> IO ()
 setupAbc verbosity pkg_desc = do
-    putStrLn $ unwords ["Cabal library version:", showVersion Distribution.Simple.Utils.cabalVersion]
+    putStrLn $ unwords ["Cabal library version:", vshow Distribution.Simple.Utils.cabalVersion]
     let version = pkgVersion $ package $ pkg_desc
     let packageVersion = "PACKAGE_VERSION"
 
