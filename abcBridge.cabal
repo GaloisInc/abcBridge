@@ -137,10 +137,8 @@ test-suite abc-test
     aig >= 0.2.6,
     directory,
     vector,
-
-    tasty < 1.2,
-    -- tasty 1.2 is incompatible with tasty-ant-xml 
-    tasty-ant-xml,
+    tasty,
+    tasty-ant-xml >= 1.1.0,
     tasty-hunit,
     tasty-quickcheck >= 0.8.1,
     QuickCheck >= 2.7
