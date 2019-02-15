@@ -77,6 +77,18 @@ library
     -- -U__BLOCKS__ to work around https://github.com/haskell/c2hs/issues/29
     -- has_attribute and has_features undefined for similar reasons...
     CC-options: -U__BLOCKS__ -U__has_attribute -U__has_feature
+
+    -- Also, because abc lib has a bogus stdint.h in the
+    -- include/sat/glucose/ directory that will trip up cpp2hs if it
+    -- encounters it, inclusion of that file needs to be avoided.
+    -- This does not appear to be an issue for Linux or Windows, but
+    -- the stdint.h file is included by stdlib.h on Darwin... but only
+    -- if __DARWIN_C_LEVEL >= __DARWIN_C_FULL (see <cdefs.h>).  The
+    -- __DARWIN_C_FULL defined level is 900000L indicating full Darwin
+    -- support levels, but abc library should only need ANSI C,
+    -- achieved by defining _ANSI_SOURCE which causes __DARWIN_C_LEVEL
+    -- to be defined at 010000L and thus avoid the stdint.h include.
+    CC-options: -D_ANSI_SOURCE
   }
 
   if os(windows) {
