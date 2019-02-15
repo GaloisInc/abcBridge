@@ -130,7 +130,7 @@ test-suite abc-test
   type: exitcode-stdio-1.0
   hs-source-dirs: tests
 
-  ghc-options: -Wall -pgmlg++
+  ghc-options: -Wall -pgmlc++
 
   default-Language: Haskell98
 
@@ -159,7 +159,7 @@ test-suite abc-test
 Executable find-segfault
   hs-source-dirs: tests
 
-  ghc-options: -Wall -pgmlg++
+  ghc-options: -Wall -pgmlc++
   extra-libraries:      stdc++
 
   default-Language: Haskell2010
@@ -194,7 +194,7 @@ Executable long-test
   if !flag(enable-extra-tests)
      buildable: False
 
-  ghc-options: -Wall -pgmlg++
+  ghc-options: -Wall -pgmlc++
   extra-libraries:      stdc++
 
   default-Language: Haskell98
