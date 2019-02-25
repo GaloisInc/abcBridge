@@ -4,8 +4,8 @@ platform:
 build: off
 
 install:
-  - choco install -y ghc --version 8.4.3
-  - choco install -y cabal --version 2.2.0.0
+  - choco install -y ghc --version 8.6.3
+  - choco install -y cabal --version 2.4.1.0
   - refreshenv
   - set PATH=%APPDATA%\cabal\bin;C:\msys64\usr\bin;%PATH%;C:\Program Files\Git\mingw64\bin
 
@@ -15,11 +15,9 @@ environment:
     NUMBER_OF_PROCESSORS: 1
 
 build_script:
-  - git submodule init
-  - git submodule update
-  - cabal update
-  - cp cabal.project.GHC843.freeze cabal.project.freeze
-  - cabal new-build
+  - git submodule update --init --recursive
+  - cabal new-update
+  - cabal new-build --enable-tests --enable-benchmarks
 
 test_script:
-  - cabal new-test
+  - cabal new-test --enable-tests
