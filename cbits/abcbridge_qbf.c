@@ -1,5 +1,7 @@
 #include "abcbridge.h"
 
+extern int Abc_NtkDSat( Abc_Ntk_t * pNtk, ABC_INT64_T nConfLimit, ABC_INT64_T nInsLimit, int nLearnedStart, int nLearnedDelta, int nLearnedPerce, int fAlignPol, int fAndOuts, int fNewSolver, int fVerbose );
+
 /**Function*************************************************************
 
   Synopsis    [Translates model into the vector of values.]
