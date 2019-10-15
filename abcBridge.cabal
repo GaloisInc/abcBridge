@@ -1,3 +1,4 @@
+Cabal-Version:      2.4
 Name:               abcBridge
 Version:            0.17.1
 Synopsis:           Bindings for ABC, A System for Sequential
@@ -5,14 +6,13 @@ Synopsis:           Bindings for ABC, A System for Sequential
 Description:        Bindings for ABC focused on creating And-Inverter
                     Graphs (AIG) and then performing synthesis and
                     equivalence checking.
-License:            BSD3
+License:            BSD-3-Clause
 License-file:       LICENSE
 Author:             Galois Inc.
 Maintainer:         jhendrix@galois.com, rdockins@galois.com
 Copyright:          (c) 2010-2015 Galois Inc.
 Category:           Data
 build-type:         Custom
-cabal-Version:      >= 1.18
 
 extra-source-files:
   include/*.h
