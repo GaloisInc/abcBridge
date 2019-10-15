@@ -19,6 +19,45 @@ extra-source-files:
   cbits/*.c
   scripts/*.sh
   tests/eijk.S298.S.aig
+  abc-build/CMakeLists.txt
+  abc-build/Makefile
+  abc-build/README.md
+  abc-build/abc.rc
+  abc-build/abcexe.dsp
+  abc-build/abclib.dsp
+  abc-build/abcspace.dsw
+  abc-build/copyright.txt
+  abc-build/depends.sh
+  abc-build/galois-abcBridge.version
+  abc-build/readmeaig
+  abc-build/src/bdd/cudd/Makefile
+  abc-build/src/bdd/cudd/license
+  abc-build/src/bdd/cudd/r7x8.1.mat
+  abc-build/src/bdd/cudd/r7x8.1.out
+  abc-build/src/misc/avl/avl.doc
+  abc-build/src/misc/bzlib/CHANGES
+  abc-build/src/misc/bzlib/LICENSE
+  abc-build/src/misc/bzlib/bzip2.txt
+  abc-build/src/misc/bzlib/link.txt
+  abc-build/src/misc/bzlib/manual.html
+  abc-build/src/misc/zlib/README
+  abc-build/src/misc/zlib/algorithm.txt
+  abc-build/src/misc/zlib/license
+  abc-build/src/misc/zlib/link.txt
+  abc-build/src/phys/place/Makefile
+  abc-build/src/phys/place/README
+  abc-build/src/phys/place/hpwl
+  abc-build/src/sat/bsat/license
+  abc-build/src/sat/bsat2/LICENSE
+  abc-build/src/sat/bsat2/README
+  abc-build/src/sat/bsat2/ReleaseNotes-2.2.0.txt
+  abc-build/src/sat/proof/stats.txt
+  abc-build/src/sat/satoko/LICENSE
+  abc-build/src/sat/xsat/license
+  abc-build/**/*.c
+  abc-build/**/*.h
+  abc-build/**/*.cpp
+  abc-build/**/*.make
 
 flag enable-extra-tests
   Description: Enable building the long-test and find-segfault utility progams
