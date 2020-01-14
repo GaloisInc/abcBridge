@@ -108,12 +108,17 @@ main = defaultMainWithHooks simpleUserHooks
                     cleanAbc v
                     cleanHook simpleUserHooks pkg_desc unit uh cf
 
+#if MIN_VERSION_Cabal(3,0,0)
+    }
+
+#else
     , sDistHook = \pkg_desc lbi h f -> do
                     let v = fromFlag $ sDistVerbosity f
                     setupAbc v pkg_desc
                     pkg_desc' <- abcPkgDesc pkg_desc
                     sDistHook simpleUserHooks pkg_desc' lbi h f
     }
+#endif
 
 -- Determine which libabc should be used:
 --  1. If there are sources available in the abc-build subdirectory,

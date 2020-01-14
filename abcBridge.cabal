@@ -36,7 +36,7 @@ custom-setup
   setup-depends: base
                , directory
                , filepath
-               , Cabal
+               , Cabal >= 2.0 && < 4.0
 
 library
 
