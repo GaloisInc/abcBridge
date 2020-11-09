@@ -88,7 +88,7 @@ library
     -- support levels, but abc library should only need ANSI C,
     -- achieved by defining _ANSI_SOURCE which causes __DARWIN_C_LEVEL
     -- to be defined at 010000L and thus avoid the stdint.h include.
-    CC-options: -D_ANSI_SOURCE
+    CC-options: -D_ANSI_SOURCE -Wno-error=implicit-function-declaration
   }
 
   if os(windows) {
