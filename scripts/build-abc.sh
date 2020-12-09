@@ -66,4 +66,4 @@ case "$OS" in
 esac
 
 cd abc-build
-make -j$NPROC ARCHFLAGS="-DABC_LIB $A" ABC_USE_NO_PTHREADS=1 ABC_USE_NO_READLINE=1 libabc.a
+make -j$NPROC ARCHFLAGS="-DABC_LIB $A" ABC_USE_NO_PTHREADS=1 ABC_USE_NO_READLINE=1 libabc.a abc
