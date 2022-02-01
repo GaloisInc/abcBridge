@@ -48,7 +48,12 @@ module Data.ABC.AIG
 import Prelude ()
 import Prelude.Compat hiding (and, or, not)
 
-import Foreign
+import Foreign.ForeignPtr
+import Foreign.Marshal.Array
+import Foreign.Marshal.Alloc
+import Foreign.Marshal.Utils
+import Foreign.Ptr
+import Foreign.Storable
 
 import Control.Exception
 import Control.Monad.Compat
