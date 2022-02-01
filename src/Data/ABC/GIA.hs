@@ -63,7 +63,11 @@ import qualified Data.AIG.Trace as Tr
 import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Unboxed as V
 import qualified Data.Vector.Unboxed.Mutable as VM
-import Foreign hiding (void, xor)
+import Foreign.ForeignPtr
+import Foreign.Marshal.Alloc
+import Foreign.Marshal.Array
+import Foreign.Ptr
+import Foreign.Storable
 import System.Directory
 
 import Data.ABC.Internal.ABC
