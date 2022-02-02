@@ -30,7 +30,7 @@ basic_tests proxy@(ABC.Proxy f) = f $
       ABC.SomeGraph g <- ABC.newGraph proxy
       let n = ABC.Network g [ABC.falseLit g]
       assertEqual "test_false" [False] =<< ABC.evaluate n []
-  , testProperty "test_constant"$ \b -> ioProperty $do
+  , testProperty "test_constant"$ \b -> ioProperty $ do
       ABC.SomeGraph g <- ABC.newGraph proxy
       let n = ABC.Network g [ABC.constant g b]
       (==[b]) <$> ABC.evaluate n []
