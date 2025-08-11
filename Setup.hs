@@ -27,19 +27,16 @@ import qualified Data.List as L
 import Distribution.Version( Version )
 import Distribution.PackageDescription (mkFlagName)
 import Distribution.Pretty ( prettyShow )
-
-vshow = prettyShow
-
 #elif MIN_VERSION_Cabal(2,0,0)
 import Distribution.Version( Version, showVersion )
 import Distribution.PackageDescription (mkFlagName)
-
-vshow = showVersion
 #else
 import Data.Version( Version, showVersion )
 import Distribution.PackageDescription (FlagName(..))
+#endif
 
-vshow = showVersion
+#if MIN_VERSION_Cabal(3,14,0)
+import Distribution.Utils.Path (makeRelativePathEx, makeSymbolicPath)
 #endif
 
 -- The abcBridge depends on the ABC library itself.  The ABC library can be
@@ -175,15 +172,15 @@ abcPkgDesc pkg_desc = do
   abcInclDirs <- fmap lines $ readFile $ "scripts" </> "abc-incl-dirs.txt"
   (p,mkBI) <- getABCLib >>= \case
           LocalABC _ lib -> return (pkg_desc, libDirAbc lib)
-          SystemABC _ lib -> let fullsrc = extraSrcFiles pkg_desc ++ abcSrcFiles
+          SystemABC _ lib -> let fullsrc = extraSrcFiles pkg_desc ++ map makeRelativePathEx abcSrcFiles
                                    in return (pkg_desc { extraSrcFiles = fullsrc }, libDirAbc lib)
   return $ updatePackageDescription (mkBI abcInclDirs) p
 
 libDirAbc :: FilePath -> [FilePath] -> HookedBuildInfo
 libDirAbc libdir abcInclDirs = (Just buildinfo, [])
     where buildinfo = emptyBuildInfo
-                      { includeDirs = abcInclDirs
-                      , extraLibDirs = [libdir]
+                      { includeDirs = map makeSymbolicPath abcInclDirs
+                      , extraLibDirs = [makeSymbolicPath libdir]
                       }
 
 onWindows :: Monad m => m () -> m ()
@@ -194,7 +191,13 @@ onWindows act = case buildPlatform of
 -- call "make clean" in the abc directory, if it exists
 cleanAbc :: Verbosity -> IO ()
 cleanAbc verbosity = do
-    rawSystemExit verbosity "sh" ["scripts" </> "lite-clean-abc.sh"]
+    rawSystemExit
+      verbosity
+#if MIN_VERSION_Cabal(3,14,0)
+      Nothing -- Do not change the CWD
+#endif
+      "sh"
+      ["scripts" </> "lite-clean-abc.sh"]
 
 -- If necessary, fetch the ABC sources and prepare for building
 setupAbc :: Verbosity -> PackageDescription -> IO ()
@@ -249,4 +252,20 @@ buildAbc verbosity fs = getABCLib >>= \case
 #if !(MIN_VERSION_Cabal(2,0,0))
 mkFlagName :: String -> FlagName
 mkFlagName = FlagName
+#endif
+
+#if MIN_VERSION_Cabal(2,2,0)
+vshow = prettyShow
+#elif MIN_VERSION_Cabal(2,0,0)
+vshow = showVersion
+#else
+vshow = showVersion
+#endif
+
+#if !(MIN_VERSION_Cabal(3,14,0))
+makeRelativePathEx :: FilePath -> FilePath
+makeRelativePathEx = id
+
+makeSymbolicPath :: FilePath -> FilePath
+makeSymbolicPath = id
 #endif
