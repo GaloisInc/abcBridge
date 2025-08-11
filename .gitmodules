@@ -1,3 +1,6 @@
 [submodule "abc-build"]
 	path = abc-build
 	url = https://github.com/GaloisInc/abc.git
+[submodule "deps/aig"]
+	path = deps/aig
+	url = https://github.com/GaloisInc/aig.git
