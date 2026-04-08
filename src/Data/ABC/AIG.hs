@@ -349,7 +349,9 @@ instance AIG.IsAIG Lit AIG where
           r1 <- evaluateFn v . Lit =<< abcObjLit1 o
           VM.write v i (r0 && r1)
       -- Return evaluation function.
-      pureEvaluateFn g <$> V.freeze v
+      v' <- V.freeze v
+      pure $ \l ->
+        pure $ pureEvaluateFn g v' l
 
 forI_ :: Monad m => Int -> (Int -> m ()) -> m ()
 forI_ = go 0
