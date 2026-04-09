@@ -256,7 +256,9 @@ instance AIG.IsAIG Lit GIA where
         let r = (c0 /= b0) && (c1 /= b1)
         VM.write vec i r
     -- return the outputs
-    pureEvaluateFn <$> V.freeze vec
+    vec' <- V.freeze vec
+    pure $ \l ->
+      pure $ pureEvaluateFn vec' l
 
 -- | Evaluate a literal on an assignment.
 pureEvaluateFn :: V.Vector Bool -> Lit s -> Bool
